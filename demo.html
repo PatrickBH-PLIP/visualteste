@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual Pimenta — Demonstração</title>
+<style>
+:root {
+  --red: #d92f45;
+  --dark: #20212a;
+  --muted: #858795;
+  --bg: #f6f7fb;
+  --line: #ececf2;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--dark);
+}
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 245px;
+  background: #fff;
+  border-right: 1px solid var(--line);
+  padding: 26px 17px;
+  flex-shrink: 0;
+}
+.brand { display:flex; align-items:center; gap:10px; margin:0 8px 38px; }
+.logo {
+  background: var(--red); color:white; border-radius:12px;
+  width:42px; height:42px; display:grid; place-items:center;
+  font-size:22px; font-weight:800;
+}
+.brand strong { display:block; font-size:18px; }
+.brand small { color:var(--muted); font-size:11px; }
+.section-label {
+  color:#a1a2ae; font-size:10px; font-weight:800;
+  letter-spacing:1.4px; margin:25px 12px 10px;
+}
+.nav {
+  display:flex; gap:12px; align-items:center;
+  padding:12px; border-radius:10px; color:#6f7180;
+  font-size:13px; margin:4px 0;
+}
+.nav.active { background:#fff0f2; color:var(--red); font-weight:700; }
+.nav span:first-child { width:20px; text-align:center; font-size:17px; }
+.sidebar-note {
+  margin-top:45px; padding:14px; border-radius:12px;
+  background:#fff5f5; color:#8b4850; font-size:12px; line-height:1.6;
+}
+main { flex:1; min-width:0; padding:30px 34px; }
+.topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.eyebrow { color:var(--muted); font-size:12px; margin-bottom:7px; }
+h1 { margin:0; font-size:26px; letter-spacing:-.7px; }
+.profile { display:flex; align-items:center; gap:10px; }
+.avatar {
+  width:40px; height:40px; display:grid; place-items:center;
+  background:#ffe4e8; color:var(--red); border-radius:50%; font-weight:800;
+}
+.profile small { color:var(--muted); display:block; margin-top:4px; }
+.demo {
+  margin:24px 0; background:#fff4e8; border:1px solid #ffe4c9;
+  padding:12px 15px; border-radius:10px; color:#91521e;
+  font-size:12px; line-height:1.5;
+}
+.demo strong { display:block; margin-bottom:3px; }
+.actions { display:flex; flex-wrap:wrap; gap:10px; margin:22px 0; }
+button {
+  border:1px solid var(--line); background:#fff; color:var(--dark);
+  border-radius:9px; padding:11px 15px; font-weight:700; cursor:pointer;
+}
+button.primary { background:var(--red); color:white; border-color:var(--red); }
+button:hover { filter:brightness(.97); }
+.metrics {
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px;
+}
+.card {
+  background:#fff; border:1px solid var(--line); border-radius:14px;
+  padding:19px; min-width:0;
+}
+.metric-head { display:flex; justify-content:space-between; gap:8px; color:var(--muted); font-size:12px; }
+.metric-icon {
+  background:#fff0f2; color:var(--red); width:35px; height:35px;
+  border-radius:10px; display:grid; place-items:center; font-size:17px;
+}
+.number { font-size:27px; font-weight:800; margin:17px 0 8px; letter-spacing:-.8px; }
+.change { font-size:11px; color:#21845b; }
+.change.neutral { color:var(--muted); }
+.content-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(260px,1fr); gap:16px; margin-top:20px; }
+.card-title { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:20px; }
+.card-title h2 { margin:0; font-size:15px; }
+.card-title a { font-size:12px; color:var(--red); text-decoration:none; cursor:pointer; }
+table { border-collapse:collapse; width:100%; font-size:12px; }
+th { text-align:left; color:var(--muted); font-size:10px; font-weight:700; padding:10px 5px; }
+td { border-top:1px solid var(--line); padding:14px 5px; }
+.product { display:flex; align-items:center; gap:10px; }
+.product-icon {
+  width:36px; height:38px; border-radius:8px; background:#f5e8e4;
+  display:grid; place-items:center; font-size:18px;
+}
+.product strong { display:block; font-size:12px; }
+.product small { display:block; color:var(--muted); font-size:10px; margin-top:4px; }
+.status { border-radius:20px; padding:5px 8px; background:#e9f8ef; color:#21845b; font-size:10px; white-space:nowrap; }
+.status.low { background:#fff0e3; color:#b66a1c; }
+.sale-list { display:flex; flex-direction:column; gap:17px; }
+.sale { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.sale-name { font-size:12px; font-weight:700; }
+.sale small { display:block; color:var(--muted); font-size:10px; margin-top:5px; }
+.sale-price { font-weight:800; font-size:12px; white-space:nowrap; }
+.bar-row { margin:20px 0; }
+.bar-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:9px; }
+.bar { height:7px; border-radius:10px; background:#f0f0f5; overflow:hidden; }
+.fill { height:100%; border-radius:10px; background:var(--red); }
+footer { text-align:center; color:#a0a1ad; font-size:10px; padding:25px 0 5px; }
+@media(max-width:1050px) {
+  .sidebar { width:205px; }
+  main { padding:24px 20px; }
+  .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:720px) {
+  .sidebar { display:none; }
+  main { padding:20px 14px; }
+  h1 { font-size:22px; }
+  .content-grid { grid-template-columns:1fr; }
+  .profile div:last-child { display:none; }
+  .card { padding:14px; }
+  .number { font-size:24px; }
+  table { min-width:460px; }
+  .table-wrap { overflow-x:auto; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">P</div>
+      <div><strong>Visual Pimenta</strong><small>GESTÃO INTELIGENTE</small></div>
+    </div>
+    <div class="section-label">MENU PRINCIPAL</div>
+    <div class="nav active"><span>▦</span> Visão geral</div>
+    <div class="nav"><span>◇</span> Produtos</div>
+    <div class="nav"><span>▤</span> Estoque</div>
+    <div class="nav"><span>↗</span> Vendas</div>
+    <div class="nav"><span>◷</span> Pagamentos</div>
+    <div class="section-label">GESTÃO</div>
+    <div class="nav"><span>▥</span> Relatórios</div>
+    <div class="nav"><span>♙</span> Clientes</div>
+    <div class="nav"><span>⚙</span> Configurações</div>
+    <div class="sidebar-note">
+      <strong>✦ Modo demonstração</strong><br>
+      Explore a aparência do sistema. Os dados exibidos são fictícios e não são salvos.
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <div class="eyebrow">QUARTA-FEIRA, 14 DE OUTUBRO</div>
+        <h1>Visão geral</h1>
+      </div>
+      <div class="profile">
+        <div class="avatar">VP</div>
+        <div><strong>Minha loja</strong><small>Administrador · Demo</small></div>
+      </div>
+    </div>
+
+    <div class="demo">
+      <strong>⚠ Você está visualizando uma demonstração</strong>
+      Os números, produtos e vendas abaixo são exemplos. Nenhuma informação real está sendo consultada ou alterada.
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="alert('Demonstração: cadastro de produto não está conectado ao banco.')">＋ Novo produto</button>
+      <button onclick="alert('Demonstração: cadastro de venda não está conectado ao banco.')">＋ Nova venda</button>
+      <button onclick="window.print()">⇩ Imprimir painel</button>
+    </div>
+
+    <section class="metrics">
+      <div class="card">
+        <div class="metric-head"><span>Produtos ativos</span><span class="metric-icon">◇</span></div>
+        <div class="number">248</div><div class="change">↑ 12 neste mês</div>
+      </div>
+      <div class="card">
+        <div class="metric-head"><span>Unidades em estoque</span><span class="metric-icon">▤</span></div>
+        <div class="number">1.426</div><div class="change neutral">Em todos os produtos</div>
+      </div>
+      <div class="card">
+        <div class="metric-head"><span>Vendas no mês</span><span class="metric-icon">↗</span></div>
+        <div class="number">R$ 18.450</div><div class="change">↑ 8,4% no exemplo</div>
+      </div>
+      <div class="card">
+        <div class="metric-head"><span>Estoque baixo</span><span class="metric-icon">!</span></div>
+        <div class="number">7</div><div class="change neutral">Produtos para conferir</div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="card">
+        <div class="card-title"><h2>Produtos recentes</h2><a onclick="alert('Demonstração de produtos')">Ver todos →</a></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>PRODUTO</th><th>PREÇO</th><th>ESTOQUE</th><th>STATUS</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="product"><div class="product-icon">👕</div><div><strong>Camiseta básica</strong><small>PRETO · M</small></div></div></td>
+                <td>R$ 59,90</td><td>42 un.</td><td><span class="status">Disponível</span></td>
+              </tr>
+              <tr>
+                <td><div class="product"><div class="product-icon">👗</div><div><strong>Vestido casual</strong><small>FLORAL · P</small></div></div></td>
+                <td>R$ 129,90</td><td>3 un.</td><td><span class="status low">Estoque baixo</span></td>
+              </tr>
+              <tr>
+                <td><div class="product"><div class="product-icon">👖</div><div><strong>Calça jeans</strong><small>AZUL · 40</small></div></div></td>
+                <td>R$ 149,90</td><td>18 un.</td><td><span class="status">Disponível</span></td>
+              </tr>
+              <tr>
+                <td><div class="product"><div class="product-icon">🧥</div><div><strong>Jaqueta leve</strong><small>BEGE · G</small></div></div></td>
+                <td>R$ 189,90</td><td>2 un.</td><td><span class="status low">Estoque baixo</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><h2>Vendas recentes</h2><a onclick="alert('Demonstração de vendas')">Ver todas →</a></div>
+        <div class="sale-list">
+          <div class="sale"><div><div class="sale-name">Mariana Oliveira</div><small>Venda #1048 · Hoje</small></div><div class="sale-price">R$ 289,80</div></div>
+          <div class="sale"><div><div class="sale-name">Camila Santos</div><small>Venda #1047 · Hoje</small></div><div class="sale-price">R$ 149,90</div></div>
+          <div class="sale"><div><div class="sale-name">Juliana Costa</div><small>Venda #1046 · Ontem</small></div><div class="sale-price">R$ 219,80</div></div>
+          <div class="sale"><div><div class="sale-name">Ana Ferreira</div><small>Venda #1045 · Ontem</small></div><div class="sale-price">R$ 59,90</div></div>
+        </div>
+        <div class="card-title" style="margin-top:30px;margin-bottom:12px"><h2>Estoque por categoria</h2></div>
+        <div class="bar-row"><div class="bar-label"><span>Blusas</span><strong>42%</strong></div><div class="bar"><div class="fill" style="width:42%"></div></div></div>
+        <div class="bar-row"><div class="bar-label"><span>Calças</span><strong>28%</strong></div><div class="bar"><div class="fill" style="width:28%"></div></div></div>
+        <div class="bar-row"><div class="bar-label"><span>Vestidos</span><strong>18%</strong></div><div class="bar"><div class="fill" style="width:18%"></div></div></div>
+        <div class="bar-row"><div class="bar-label"><span>Outros</span><strong>12%</strong></div><div class="bar"><div class="fill" style="width:12%"></div></div></div>
+      </div>
+    </section>
+    <footer>Visual Pimenta · Prévia visual para demonstração · Dados fictícios</footer>
+  </main>
+</div>
+</body>
+</html>
