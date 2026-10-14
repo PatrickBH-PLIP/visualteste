@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+html, body, #root { min-height: 100%; }
+body {
+  @apply bg-bege font-sans text-tinta antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+h1, h2, h3 { font-family: theme('fontFamily.serif'); }
+
+@layer components {
+  .input {
+    @apply w-full rounded-md border border-tinta/25 bg-white/70 px-3 py-2.5 text-base text-tinta placeholder:text-tinta/40
+           focus:border-tinta/60 focus:outline-none focus:ring-2 focus:ring-offset-0;
+    --tw-ring-color: color-mix(in srgb, var(--c-main, #cd1c18) 35%, transparent);
+  }
+  .label { @apply mb-1 block text-sm font-medium text-tinta/80; }
+  .field-error { @apply mt-1 text-sm text-chilli; }
+  .card { @apply rounded-xl border border-tinta/10 bg-bege shadow-suave; }
+  .btn {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bege
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary { @apply btn text-white hover:brightness-110 focus-visible:ring-tinta/60; background: var(--c-main, #cd1c18); }
+  .btn-outline { @apply btn border border-tinta/30 bg-transparent text-tinta hover:bg-tinta/5 focus-visible:ring-tinta/50; }
+  .btn-danger { @apply btn bg-atrasado text-white hover:brightness-95 focus-visible:ring-atrasado; }
+  .btn-ghost { @apply btn text-tinta hover:bg-tinta/5; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
