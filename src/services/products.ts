@@ -18,6 +18,11 @@ export async function listArchivedProducts(companyId: string): Promise<Product[]
   return data as Product[]
 }
 
+export async function deleteProductPermanently(companyId: string, id: string) {
+  const { error } = await supabase.rpc('delete_product_permanently', { p_company: companyId, p_product: id })
+  if (error) throw error
+}
+
 export async function restoreProduct(id: string) {
   const { error } = await supabase.from('products').update({ archived_at: null }).eq('id', id)
   if (error) throw error
