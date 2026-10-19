@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArchiveRestore, Package } from 'lucide-react'
+import { ArchiveRestore, Package, Trash2 } from 'lucide-react'
 import { useCompany } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
-import { listArchivedProducts, restoreProduct } from '@/services/products'
+import { deleteProductPermanently, listArchivedProducts, restoreProduct } from '@/services/products'
 import { formatBRL } from '@/lib/money'
 import { ErrorBanner, Spinner } from '@/components/ui'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import type { Product } from '@/types'
 
 const CATEGORY: Record<string, string> = {
   feminino: 'Feminino', masculino: 'Masculino', lingerie: 'Lingerie', sex_shop: 'Sex Shop',
@@ -16,6 +18,7 @@ export default function ArchivedProducts() {
   const qc = useQueryClient()
   const toast = useToast()
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<Product | null>(null)
   const q = useQuery({
     queryKey: ['archived-products', companyId],
     queryFn: () => listArchivedProducts(companyId),
@@ -23,18 +26,29 @@ export default function ArchivedProducts() {
   const restore = useMutation({
     mutationFn: restoreProduct,
     onSuccess: async () => {
-      toast.success('Produto restaurado para o estoque.')
+      toast('ok', 'Produto restaurado para o estoque.')
       await Promise.all([
         qc.invalidateQueries({ queryKey: ['archived-products', companyId] }),
         qc.invalidateQueries({ queryKey: ['products', companyId] }),
         qc.invalidateQueries({ queryKey: ['home'] }),
       ])
     },
-    onError: () => toast.error('Não foi possível restaurar o produto.'),
+    onError: (e) => toast('erro', e instanceof Error ? e.message : 'Não foi possível restaurar o produto.'),
     onSettled: () => setBusyId(null),
   })
 
+  const remove = useMutation({
+    mutationFn: (p: Product) => deleteProductPermanently(companyId, p.id),
+    onSuccess: async () => {
+      toast('ok', 'Produto excluído permanentemente.')
+      setDeleting(null)
+      await qc.invalidateQueries({ queryKey: ['archived-products', companyId] })
+    },
+    onError: (e) => toast('erro', e instanceof Error ? e.message : 'Não foi possível excluir o produto.'),
+  })
+
   return (
+    <>
     <section className="space-y-5">
       <div>
         <h1 className="text-3xl font-bold text-marinho">Produtos arquivados</h1>
@@ -74,13 +88,22 @@ export default function ArchivedProducts() {
                 <div className="col-span-2"><dt className="text-tinta/60">Observações</dt><dd className="whitespace-pre-wrap">{p.notes || '—'}</dd></div>
                 <div className="col-span-2"><dt className="text-tinta/60">Arquivado em</dt><dd>{p.archived_at ? new Date(p.archived_at).toLocaleString('pt-BR') : '—'}</dd></div>
               </dl>
-              <button type="button" className="btn-primary w-full" disabled={restore.isPending} onClick={() => { setBusyId(p.id); restore.mutate(p.id) }}>
-                <ArchiveRestore size={17} /> {busyId === p.id ? 'Restaurando…' : 'Restaurar produto'}
-              </button>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button type="button" className="btn-primary w-full" disabled={restore.isPending || remove.isPending} onClick={() => { setBusyId(p.id); restore.mutate(p.id) }}>
+                  <ArchiveRestore size={17} /> {busyId === p.id ? 'Restaurando…' : 'Restaurar'}
+                </button>
+                <button type="button" className="btn-outline w-full !text-chilli" disabled={restore.isPending || remove.isPending} onClick={() => setDeleting(p)}>
+                  <Trash2 size={17} /> Excluir permanentemente
+                </button>
+              </div>
             </article>
           ))}
         </div>
       )}
     </section>
+    {deleting && <ConfirmDialog title="Excluir produto permanentemente" danger confirmLabel="Excluir definitivamente" busy={remove.isPending}
+      message="Esta ação não pode ser desfeita. Produtos com vendas ou movimentações registradas não poderão ser apagados, para preservar o histórico."
+      onConfirm={() => remove.mutate(deleting)} onClose={() => { if (!remove.isPending) setDeleting(null) }} />}
+    </>
   )
 }
