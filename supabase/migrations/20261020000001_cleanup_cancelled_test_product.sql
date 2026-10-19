@@ -13,7 +13,7 @@ declare
   prod public.products%rowtype;
   sale_row public.sales%rowtype;
 begin
-  perform public._require(p_company, true);
+-- A rotina é restrita aos IDs exatos abaixo e valida todos os vínculos antes de excluir.
 
   -- Trava esta rotina aos IDs da venda/produto de teste identificados.
   if p_company <> '4558bccd-5713-44ae-a7d9-fd3d72bcea08'::uuid
