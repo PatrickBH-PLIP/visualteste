@@ -5,6 +5,7 @@ import { useCompany } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { deleteProductPermanently, listArchivedProducts, restoreProduct } from '@/services/products'
 import { formatBRL } from '@/lib/money'
+import { errorMessage } from '@/lib/supabase'
 import { ErrorBanner, Spinner } from '@/components/ui'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import type { Product } from '@/types'
@@ -33,7 +34,7 @@ export default function ArchivedProducts() {
         qc.invalidateQueries({ queryKey: ['home'] }),
       ])
     },
-    onError: (e) => toast('erro', e instanceof Error ? e.message : 'Não foi possível restaurar o produto.'),
+    onError: (e) => toast('erro', errorMessage(e)),
     onSettled: () => setBusyId(null),
   })
 
@@ -44,7 +45,7 @@ export default function ArchivedProducts() {
       setDeleting(null)
       await qc.invalidateQueries({ queryKey: ['archived-products', companyId] })
     },
-    onError: (e) => toast('erro', e instanceof Error ? e.message : 'Não foi possível excluir o produto.'),
+    onError: (e) => toast('erro', errorMessage(e)),
   })
 
   return (
