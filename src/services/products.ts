@@ -10,6 +10,19 @@ export async function listProducts(companyId: string, category?: Category): Prom
   return data as Product[]
 }
 
+export async function listArchivedProducts(companyId: string): Promise<Product[]> {
+  const { data, error } = await supabase.from('products').select('*')
+    .eq('company_id', companyId).not('archived_at', 'is', null)
+    .order('archived_at', { ascending: false }).limit(2000)
+  if (error) throw error
+  return data as Product[]
+}
+
+export async function restoreProduct(id: string) {
+  const { error } = await supabase.from('products').update({ archived_at: null }).eq('id', id)
+  if (error) throw error
+}
+
 export async function homeSummary(companyId: string): Promise<HomeSummary> {
   const { data, error } = await supabase.rpc('home_summary', { p_company: companyId })
   if (error) throw error
