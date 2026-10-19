@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { BarChart3, Home, LogOut, Receipt, Settings, ShoppingBag } from 'lucide-react'
+import { Archive, BarChart3, Home, LogOut, Receipt, Settings, ShoppingBag } from 'lucide-react'
 import { useAuth, useCompany } from '@/hooks/useAuth'
 import { SyncIndicator } from './SyncIndicator'
 
@@ -8,6 +8,7 @@ const NAV = [
   { to: '/vendas/nova', label: 'Nova venda', icon: ShoppingBag, group: 'VENDAS' },
   { to: '/vendas', label: 'Histórico', icon: Receipt, end: true, group: 'VENDAS' },
   { to: '/balanco', label: 'Balanço', icon: BarChart3 },
+  { to: '/produtos-arquivados', label: 'Produtos arquivados', icon: Archive },
   { to: '/configuracoes', label: 'Configurações', icon: Settings },
 ]
 
