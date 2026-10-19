@@ -14,6 +14,7 @@ import EditSale from '@/pages/EditSale'
 import SalesHistory from '@/pages/SalesHistory'
 import Balance from '@/pages/Balance'
 import Settings from '@/pages/Settings'
+import ArchivedProducts from '@/pages/ArchivedProducts'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15_000, retry: 1, refetchOnWindowFocus: true, refetchOnReconnect: true } },
@@ -36,6 +37,7 @@ function Gate() {
           <Route path="vendas/:id/editar" element={<EditSale />} />
           <Route path="balanco" element={<Balance />} />
           <Route path="configuracoes" element={<Settings />} />
+          <Route path="produtos-arquivados" element={<ArchivedProducts />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
