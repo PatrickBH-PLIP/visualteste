@@ -15,6 +15,13 @@ declare
 begin
   perform public._require(p_company, true);
 
+  -- Trava esta rotina aos IDs da venda/produto de teste identificados.
+  if p_company <> '4558bccd-5713-44ae-a7d9-fd3d72bcea08'::uuid
+     or p_product <> '25c9a9c6-3a4b-448e-8654-7a47f02081f4'::uuid
+     or p_sale <> 'd2ebebce-33a9-40b1-87d6-b88728a3c84b'::uuid then
+    raise exception 'Esta rotina só pode limpar os registros de teste previamente identificados.';
+  end if;
+
   select * into prod
     from public.products
    where id = p_product and company_id = p_company
@@ -29,7 +36,9 @@ begin
    where id = p_sale and company_id = p_company
    for update;
 
-  if not found or sale_row.cancelled_at is null then
+  if not found or sale_row.cancelled_at is null
+     or sale_row.sale_number <> 1
+     or sale_row.cancel_reason <> 'FICOU PEQUENO' then
     raise exception 'Venda não encontrada ou não está cancelada.';
   end if;
 
