@@ -44,7 +44,6 @@ export default function Settings() {
 
       <section className="card space-y-1 p-4 text-sm">
         <p><strong>Loja:</strong> {companyName}</p>
-        <p><strong>Usuário:</strong> {session?.user.email} ({role === 'admin' ? 'administrador' : 'equipe'})</p>
         <button type="button" className="btn-outline mt-2" onClick={signOut}>Sair</button>
       </section>
 
