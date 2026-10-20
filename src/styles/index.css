@@ -4,10 +4,13 @@
 
 :root { color-scheme: light; }
 html, body, #root { min-height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   @apply bg-bege font-sans text-tinta antialiased;
   padding-bottom: env(safe-area-inset-bottom);
+  overflow-x: hidden;
 }
+button, a, input, select, textarea { touch-action: manipulation; }
 h1, h2, h3 { font-family: theme('fontFamily.serif'); }
 
 @layer components {
@@ -28,6 +31,10 @@ h1, h2, h3 { font-family: theme('fontFamily.serif'); }
   .btn-outline { @apply btn border border-tinta/30 bg-transparent text-tinta hover:bg-tinta/5 focus-visible:ring-tinta/50; }
   .btn-danger { @apply btn bg-atrasado text-white hover:brightness-95 focus-visible:ring-atrasado; }
   .btn-ghost { @apply btn text-tinta hover:bg-tinta/5; }
+}
+
+@media (max-width: 380px) {
+  .btn { @apply px-3; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
