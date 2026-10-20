@@ -4,12 +4,12 @@ import { useAuth, useCompany } from '@/hooks/useAuth'
 import { SyncIndicator } from './SyncIndicator'
 
 const NAV = [
-  { to: '/', label: 'Home', icon: Home, end: true },
-  { to: '/vendas/nova', label: 'Nova venda', icon: ShoppingBag, group: 'VENDAS' },
-  { to: '/vendas', label: 'Histórico', icon: Receipt, end: true, group: 'VENDAS' },
-  { to: '/balanco', label: 'Balanço', icon: BarChart3 },
-  { to: '/produtos-arquivados', label: 'Produtos arquivados', icon: Archive },
-  { to: '/configuracoes', label: 'Configurações', icon: Settings },
+  { to: '/', label: 'Home', mobileLabel: 'Início', icon: Home, end: true },
+  { to: '/vendas/nova', label: 'Nova venda', mobileLabel: 'Venda', icon: ShoppingBag, group: 'VENDAS' },
+  { to: '/vendas', label: 'Histórico', mobileLabel: 'Histórico', icon: Receipt, end: true, group: 'VENDAS' },
+  { to: '/balanco', label: 'Balanço', mobileLabel: 'Balanço', icon: BarChart3 },
+  { to: '/produtos-arquivados', label: 'Produtos arquivados', mobileLabel: 'Arquivados', icon: Archive },
+  { to: '/configuracoes', label: 'Configurações', mobileLabel: 'Ajustes', icon: Settings },
 ]
 
 const link = ({ isActive }: { isActive: boolean }) =>
@@ -37,24 +37,24 @@ export function Layout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-tinta/10 bg-bege/95 px-4 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur md:px-8">
-          <div className="flex items-center gap-3 md:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-tinta/10 bg-bege/95 px-3 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur sm:px-4 md:px-8">
+          <div className="flex min-w-0 items-center gap-3 md:hidden">
             <img src="/assets/logo.jpg" alt="Visual Pimenta" className="h-10 w-auto rounded bg-white p-0.5" />
           </div>
           <p className="hidden font-serif text-lg md:block">{companyName}</p>
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <SyncIndicator />
-            <button type="button" onClick={signOut} className="btn-ghost !min-h-[36px] !px-2 md:hidden" aria-label="Sair"><LogOut size={18} /></button>
+            <button type="button" onClick={signOut} className="btn-ghost !min-h-[40px] !px-2 md:hidden" aria-label="Sair"><LogOut size={18} /></button>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-28 md:px-8 md:pb-10"><Outlet /></main>
+        <main className="mx-auto w-full max-w-6xl min-w-0 flex-1 px-3 py-5 pb-28 sm:px-4 sm:py-6 md:px-8 md:pb-10"><Outlet /></main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-tinta/15 bg-bege pb-[env(safe-area-inset-bottom)] md:hidden" aria-label="Principal (celular)">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto overscroll-x-contain border-t border-tinta/15 bg-bege pb-[env(safe-area-inset-bottom)] md:hidden" aria-label="Principal (celular)">
         {NAV.map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end}
-            className={({ isActive }) => `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${isActive ? 'text-chilli' : 'text-marinho/80'}`}>
-            <n.icon size={20} />{n.label}
+            className={({ isActive }) => `flex min-h-[60px] min-w-[72px] shrink-0 flex-col items-center justify-center gap-1 px-2 text-[10px] font-medium whitespace-nowrap ${isActive ? 'text-chilli' : 'text-marinho/80'}`}>
+            <n.icon size={20} /><span>{n.mobileLabel}</span>
           </NavLink>
         ))}
       </nav>
