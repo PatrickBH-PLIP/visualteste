@@ -12,7 +12,7 @@ const MOV_LABEL: Record<string, string> = {
 }
 
 export default function Settings() {
-  const { companyId, companyName, role } = useCompany()
+  const { companyId, companyName } = useCompany()
   const { signOut } = useAuth()
   const [memberEmail, setMemberEmail] = useState('visualpimenta@gmail.com')
   const [memberBusy, setMemberBusy] = useState(false)
@@ -48,10 +48,9 @@ export default function Settings() {
         <button type="button" className="btn-outline mt-2" onClick={signOut}>Sair</button>
       </section>
 
-      {role === 'admin' && (
-        <section className="card space-y-3 p-4">
+      <section className="card space-y-3 p-4">
           <h2 className="text-xl">Adicionar administrador</h2>
-          <p className="text-sm text-tinta/70">O usuário precisa já ter uma conta cadastrada no sistema.</p>
+          <p className="text-sm text-tinta/70">Informe o e-mail de uma conta já criada. Apenas um administrador autorizado poderá concluir o vínculo.</p>
           <form className="space-y-3" onSubmit={addAdmin}>
             <label className="block space-y-1 text-sm">
               <span>E-mail do usuário</span>
@@ -69,8 +68,7 @@ export default function Settings() {
             </button>
           </form>
           {memberMessage && <p role="status" className="text-sm break-words">{memberMessage}</p>}
-        </section>
-      )}
+      </section>
 
       <section className="card space-y-3 p-4">
         <h2 className="text-xl">Últimas movimentações de estoque</h2>
