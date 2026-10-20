@@ -1,9 +1,7 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listMovements } from '@/services/products'
 import { useAuth, useCompany } from '@/hooks/useAuth'
 import { formatDateTime } from '@/lib/dates'
-import { supabase } from '@/lib/supabase'
 import { Spinner } from '@/components/ui'
 
 const MOV_LABEL: Record<string, string> = {
@@ -14,30 +12,8 @@ const MOV_LABEL: Record<string, string> = {
 export default function Settings() {
   const { companyId, companyName } = useCompany()
   const { signOut } = useAuth()
-  const [memberEmail, setMemberEmail] = useState('visualpimenta@gmail.com')
-  const [memberBusy, setMemberBusy] = useState(false)
-  const [memberMessage, setMemberMessage] = useState('')
-
   const moves = useQuery({ queryKey: ['movements', companyId], queryFn: () => listMovements(companyId, 50) })
 
-  async function addAdmin(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setMemberBusy(true)
-    setMemberMessage('')
-    try {
-      const { error } = await supabase.rpc('add_member', {
-        p_company: companyId,
-        p_email: memberEmail.trim(),
-        p_role: 'admin',
-      })
-      if (error) throw error
-      setMemberMessage('Administrador vinculado à loja com sucesso.')
-    } catch (error) {
-      setMemberMessage(error instanceof Error ? error.message : 'Não foi possível adicionar o administrador.')
-    } finally {
-      setMemberBusy(false)
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -46,28 +22,6 @@ export default function Settings() {
       <section className="card space-y-1 p-4 text-sm">
         <p><strong>Loja:</strong> {companyName}</p>
         <button type="button" className="btn-outline mt-2" onClick={signOut}>Sair</button>
-      </section>
-
-      <section className="card space-y-3 p-4">
-          <h2 className="text-xl">Adicionar administrador</h2>
-          <p className="text-sm text-tinta/70">Informe o e-mail de uma conta já criada. Apenas um administrador autorizado poderá concluir o vínculo.</p>
-          <form className="space-y-3" onSubmit={addAdmin}>
-            <label className="block space-y-1 text-sm">
-              <span>E-mail do usuário</span>
-              <input
-                className="input w-full"
-                type="email"
-                required
-                value={memberEmail}
-                onChange={(event) => setMemberEmail(event.target.value)}
-                autoComplete="email"
-              />
-            </label>
-            <button type="submit" className="btn-primary" disabled={memberBusy}>
-              {memberBusy ? 'Adicionando...' : 'Adicionar como administrador'}
-            </button>
-          </form>
-          {memberMessage && <p role="status" className="text-sm break-words">{memberMessage}</p>}
       </section>
 
       <section className="card space-y-3 p-4">
