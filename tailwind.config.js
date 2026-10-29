@@ -17,8 +17,8 @@ export default {
         tinta: '#2a1d1a',
       },
       fontFamily: {
-        sans: ['"Segoe UI"', 'system-ui', '-apple-system', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        serif: ['"Iowan Old Style"', '"Palatino Linotype"', 'Palatino', 'Georgia', 'serif'],
+        sans: ['Roboto', 'Arial', 'sans-serif'],
+        serif: ['Bungee', 'sans-serif'],
       },
       boxShadow: { suave: '0 1px 2px rgba(42,29,26,.08), 0 4px 14px rgba(42,29,26,.06)' },
     },
