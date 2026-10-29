@@ -11,7 +11,12 @@ body {
   overflow-x: hidden;
 }
 button, a, input, select, textarea { touch-action: manipulation; }
-h1, h2, h3 { font-family: theme('fontFamily.serif'); }
+h1, h2, h3, h4, h5, h6 { font-family: 'Bungee', sans-serif; font-weight: 400; letter-spacing: 0.01em; }
+
+/* Preserve the existing typography of the side navigation on desktop and mobile. */
+aside, nav[aria-label="Principal (celular)"] {
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
 
 @layer components {
   .input {
@@ -26,6 +31,7 @@ h1, h2, h3 { font-family: theme('fontFamily.serif'); }
     @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bege
            disabled:cursor-not-allowed disabled:opacity-50;
+    font-family: 'Roboto', sans-serif;
   }
   .btn-primary { @apply btn text-white hover:brightness-110 focus-visible:ring-tinta/60; background: var(--c-main, #cd1c18); }
   .btn-outline { @apply btn border border-tinta/30 bg-transparent text-tinta hover:bg-tinta/5 focus-visible:ring-tinta/50; }
