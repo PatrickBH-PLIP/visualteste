@@ -34,6 +34,64 @@ export async function homeSummary(companyId: string): Promise<HomeSummary> {
   return data as HomeSummary
 }
 
+/** Resumo acumulado de vendas válidas e custo das peças vendidas. Usa o custo atualmente cadastrado no produto. */
+export async function salesCostSummary(companyId: string): Promise<{
+  net_sales_cents: number
+  cost_cents: number
+  profit_cents: number
+  units_without_cost: number
+}> {
+  const sales: { id: string; net_cents: number }[] = []
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from('sales')
+      .select('id, net_cents')
+      .eq('company_id', companyId)
+      .is('cancelled_at', null)
+      .order('purchase_date', { ascending: true })
+      .range(from, from + 999)
+    if (error) throw error
+    sales.push(...(data ?? []))
+    if (!data || data.length < 1000) break
+  }
+
+  const net_sales_cents = sales.reduce((sum, sale) => sum + sale.net_cents, 0)
+  if (!sales.length) return { net_sales_cents: 0, cost_cents: 0, profit_cents: 0, units_without_cost: 0 }
+
+  const costs = new Map<string, number | null>()
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from('products')
+      .select('id, cost_cents')
+      .eq('company_id', companyId)
+      .range(from, from + 999)
+    if (error) throw error
+    for (const product of data ?? []) costs.set(product.id, product.cost_cents)
+    if (!data || data.length < 1000) break
+  }
+
+  let cost_cents = 0
+  let units_without_cost = 0
+  const saleIds = sales.map((sale) => sale.id)
+  for (let i = 0; i < saleIds.length; i += 200) {
+    const batch = saleIds.slice(i, i + 200)
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase.from('sale_items')
+        .select('product_id, quantity')
+        .eq('company_id', companyId)
+        .in('sale_id', batch)
+        .range(from, from + 999)
+      if (error) throw error
+      for (const item of data ?? []) {
+        const unitCost = costs.get(item.product_id)
+        if (unitCost == null) units_without_cost += item.quantity
+        else cost_cents += unitCost * item.quantity
+      }
+      if (!data || data.length < 1000) break
+    }
+  }
+
+  return { net_sales_cents, cost_cents, profit_cents: net_sales_cents - cost_cents, units_without_cost }
+}
+
 export interface ProductPayload {
   id: string
   category: Category
