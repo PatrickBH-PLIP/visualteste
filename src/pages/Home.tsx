@@ -128,7 +128,7 @@ export default function Home() {
 
       {selected && <Modal title={selected[0].name} onClose={() => setSelected(null)} wide>
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-          <div className="max-h-[360px] overflow-hidden rounded-lg bg-white/50">
+          <div className="h-64 overflow-hidden rounded-lg bg-white/50 sm:h-80">
             <ProductImage path={selected[0].image_path} alt={selected[0].name} />
           </div>
           <div>
