@@ -17,8 +17,8 @@ import { SIZES, type Category, type Product } from '@/types'
 
 type Stage = 'idle' | 'otimizando' | 'salvando'
 
-export function ProductForm({ product, defaultCategory, onClose }: {
-  product?: Product; defaultCategory: Category; onClose: () => void
+export function ProductForm({ product, initialProduct, defaultCategory, onClose }: {
+  product?: Product; initialProduct?: Product; defaultCategory: Category; onClose: () => void
 }) {
   const { companyId, role } = useCompany()
   const qc = useQueryClient()
@@ -43,6 +43,11 @@ export function ProductForm({ product, defaultCategory, onClose }: {
       quantity: product.quantity, price: centsToInput(product.price_cents), cost: centsToInput(product.cost_cents),
       min_stock: product.min_stock, sku: product.sku ?? '', barcode: product.barcode ?? '', supplier: product.supplier ?? '',
       description: product.description ?? '', notes: product.notes ?? '',
+    } : initialProduct ? {
+      name: initialProduct.name, category: initialProduct.category, brand: initialProduct.brand, size: '', material: initialProduct.material,
+      quantity: 0, price: centsToInput(initialProduct.price_cents), cost: centsToInput(initialProduct.cost_cents),
+      min_stock: initialProduct.min_stock, sku: '', barcode: '', supplier: initialProduct.supplier ?? '',
+      description: initialProduct.description ?? '', notes: initialProduct.notes ?? '',
     } : { category: defaultCategory, quantity: 0, min_stock: 0, price: '', cost: '' } as Partial<ProductFormValues>,
   })
 
@@ -61,7 +66,7 @@ export function ProductForm({ product, defaultCategory, onClose }: {
           await createProduct(companyId, opId.current, {
             id: productId.current, ...base, quantity: v.quantity, sku: v.sku, barcode: v.barcode,
             supplier: v.supplier, description: v.description, notes: v.notes,
-          }, newPath)
+          }, newPath ?? initialProduct?.image_path ?? null)
         } else {
           const image_path = file ? newPath : removeCurrent ? null : product!.image_path
           await updateProduct(product!.id, {
@@ -110,7 +115,7 @@ export function ProductForm({ product, defaultCategory, onClose }: {
           {busy && <div className="sm:col-span-2 h-1.5 overflow-hidden rounded bg-tinta/10" aria-hidden><div className="h-full w-1/3 animate-pulse rounded" style={{ background: 'var(--c-main)' }} /></div>}
 
           <div className="sm:col-span-2">
-            <ImageUploader file={file} onFile={(f) => { setFile(f); if (f) setRemoveCurrent(false) }} existingPath={product?.image_path}
+            <ImageUploader file={file} onFile={(f) => { setFile(f); if (f) setRemoveCurrent(false) }} existingPath={product?.image_path ?? initialProduct?.image_path}
               removed={removeCurrent} onRemoveExisting={() => setRemoveCurrent(true)} disabled={busy} />
           </div>
 
