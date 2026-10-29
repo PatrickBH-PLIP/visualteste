@@ -18,7 +18,7 @@ export default {
       },
       fontFamily: {
         sans: ['Roboto', 'Arial', 'sans-serif'],
-        serif: ['Bungee', 'sans-serif'],
+        serif: ['Work Sans', 'sans-serif'],
       },
       boxShadow: { suave: '0 1px 2px rgba(42,29,26,.08), 0 4px 14px rgba(42,29,26,.06)' },
     },
