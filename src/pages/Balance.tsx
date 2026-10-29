@@ -12,6 +12,7 @@ import { downloadBlob, toCsv } from '@/lib/csv'
 import { formatDate, periodRange, todayLocal, type PeriodKey } from '@/lib/dates'
 import { formatBRL } from '@/lib/money'
 import { balanceReport, statement } from '@/services/reports'
+import { salesCostSummary } from '@/services/products'
 import { useCompany } from '@/hooks/useAuth'
 import type { SaleStatus } from '@/types'
 
@@ -30,6 +31,7 @@ export default function Balance() {
 
   const rep = useQuery({ queryKey: ['balance', companyId, range.from, range.to], queryFn: () => balanceReport(companyId, range.from, range.to), enabled: valid })
   const st = useQuery({ queryKey: ['statement', companyId, range.from, range.to], queryFn: () => statement(companyId, range.from, range.to), enabled: valid })
+  const finances = useQuery({ queryKey: ['sales-cost-summary', companyId], queryFn: () => salesCostSummary(companyId) })
 
   const [search, setSearch] = useState('')
   const [statusF, setStatusF] = useState<SaleStatus | ''>('')
@@ -61,6 +63,25 @@ export default function Balance() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-chilli">Balanço</h1>
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-chilli">Resultado acumulado de todas as vendas</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="card p-4">
+            <p className="text-sm text-tinta/70">Lucro líquido estimado</p>
+            <p className="mt-1 text-2xl font-bold text-pago">{finances.isLoading ? 'Calculando…' : formatBRL(finances.data?.profit_cents ?? 0)}</p>
+            <p className="mt-1 text-xs text-tinta/60">Vendas válidas − custo das peças vendidas</p>
+          </div>
+          <div className="card p-4">
+            <p className="text-sm text-tinta/70">Custo das peças vendidas</p>
+            <p className="mt-1 text-2xl font-bold">{finances.isLoading ? 'Calculando…' : formatBRL(finances.data?.cost_cents ?? 0)}</p>
+            <p className="mt-1 text-xs text-tinta/60">Custo cadastrado × unidades vendidas</p>
+          </div>
+        </div>
+        {finances.data?.units_without_cost ? <p className="text-sm text-pendente">Atenção: {finances.data.units_without_cost} unidade(s) vendida(s) estão sem custo cadastrado e não entram no cálculo de custo/lucro.</p> : null}
+        {finances.isError && <ErrorBanner message="Não foi possível calcular lucro e custo das vendas." onRetry={() => finances.refetch()} />}
+        <p className="text-xs text-tinta/60">Valores acumulados de todo o histórico, sem limitar ao período selecionado abaixo. O lucro é estimado usando o custo atualmente cadastrado em cada produto.</p>
+      </section>
+
 
       <div className="card space-y-3 p-3">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Período">
