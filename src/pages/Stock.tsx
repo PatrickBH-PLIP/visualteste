@@ -7,6 +7,7 @@ import { formatBRL } from '@/lib/money'
 import { listProducts } from '@/services/products'
 import { useCompany } from '@/hooks/useAuth'
 import { ProductCard, ProductImage, stockLevel } from '@/components/ProductCard'
+import { Modal } from '@/components/Modal'
 import { ProductForm } from '@/components/ProductForm'
 import { StockModal } from '@/components/StockModal'
 import { EmptyState, ErrorBanner, Spinner } from '@/components/ui'
@@ -27,6 +28,7 @@ export default function Stock() {
   const [view, setView] = useState<'cards' | 'table'>('cards')
   const [form, setForm] = useState<{ product?: Product } | null>(null)
   const [stock, setStock] = useState<Product | null>(null)
+  const [selected, setSelected] = useState<Product[] | null>(null)
 
   const q = useQuery({
     queryKey: ['products', companyId, theme?.key],
@@ -45,6 +47,15 @@ export default function Stock() {
     out.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR') * (order === 'asc' ? 1 : -1) || SIZES.indexOf(a.size) - SIZES.indexOf(b.size))
     return out
   }, [q.data, search, brand, size, avail, order])
+
+  const groupedRows = useMemo(() => {
+    const groups = new Map<string, Product[]>()
+    for (const p of rows) {
+      const key = `${p.name.trim().toLocaleLowerCase('pt-BR')}||${p.brand.trim().toLocaleLowerCase('pt-BR')}`
+      groups.set(key, [...(groups.get(key) ?? []), p])
+    }
+    return Array.from(groups.values()).map((group) => group.slice().sort((a, b) => SIZES.indexOf(a.size) - SIZES.indexOf(b.size)))
+  }, [rows])
 
   if (!theme) return <Navigate to="/" replace />
 
@@ -95,7 +106,27 @@ export default function Stock() {
 
       {rows.length > 0 && view === 'cards' && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {rows.map((p) => <ProductCard key={p.id} product={p} onEdit={() => setForm({ product: p })} onAddStock={() => setStock(p)} />)}
+          {groupedRows.map((group) => {
+            const first = group[0]
+            const sizes = group.map((p) => p.size)
+            const range = sizes.length === 1 ? sizes[0] : `${sizes[0]} - ${sizes[sizes.length - 1]}`
+            const quantity = group.reduce((sum, p) => sum + p.quantity, 0)
+            return <button key={first.id} type="button" onClick={() => setSelected(group)}
+              className="card group overflow-hidden text-left transition hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{ outlineColor: theme.main }}>
+              <div className="relative aspect-[4/3] overflow-hidden bg-white/50">
+                <ProductImage path={first.image_path} alt={first.name} />
+                <span className="absolute left-2 top-2 rounded-md px-3 py-1 font-serif text-xl font-bold text-white shadow" style={{ background: theme.main }}>{range}</span>
+              </div>
+              <div className="space-y-1 p-4">
+                <h3 className="text-lg font-bold" style={{ color: theme.main }}>{first.name}</h3>
+                <p className="text-sm" style={{ color: theme.accentText }}>{first.brand}</p>
+                <p className="text-sm">Tamanhos: {sizes.join(', ')}</p>
+                <p className="text-sm">Quantidade total: <strong>{quantity}</strong></p>
+                <p className="pt-1 text-xs text-tinta/60">Clique para ver detalhes por tamanho</p>
+              </div>
+            </button>
+          })}
         </div>
       )}
 
@@ -124,6 +155,25 @@ export default function Stock() {
         </div>
       )}
 
+      {selected && <Modal title={selected[0].name} onClose={() => setSelected(null)} wide>
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+          <div className="h-64 overflow-hidden rounded-lg bg-white/50 sm:h-80"><ProductImage path={selected[0].image_path} alt={selected[0].name} /></div>
+          <div>
+            <h3 className="text-xl font-bold" style={{ color: theme.main }}>{selected[0].name}</h3>
+            <p className="text-sm text-tinta/70">{selected[0].brand}</p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[540px] text-left text-sm">
+                <thead className="border-b border-tinta/15 text-xs text-tinta/70"><tr><th className="p-2">Tamanho</th><th className="p-2 text-right">Quantidade</th><th className="p-2 text-right">Custo</th><th className="p-2 text-right">Valor de venda</th><th className="p-2">Ações</th></tr></thead>
+                <tbody>{selected.map((p) => <tr key={p.id} className="border-b border-tinta/10 last:border-0">
+                  <td className="p-2 font-semibold">{p.size}</td><td className="p-2 text-right">{p.quantity}</td>
+                  <td className="p-2 text-right">{p.cost_cents == null ? 'Não informado' : formatBRL(p.cost_cents)}</td><td className="p-2 text-right">{formatBRL(p.price_cents)}</td>
+                  <td className="p-2"><div className="flex gap-1"><button type="button" className="btn-outline !min-h-[34px] !px-2" onClick={() => { setSelected(null); setForm({ product: p }) }}>Editar</button><button type="button" className="btn-primary !min-h-[34px] !px-2" onClick={() => { setSelected(null); setStock(p) }}>Estoque</button></div></td>
+                </tr>)}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </Modal>}
       {form && <ProductForm product={form.product} defaultCategory={theme.key} onClose={() => setForm(null)} />}
       {stock && <StockModal product={stock} onClose={() => setStock(null)} />}
     </div>
