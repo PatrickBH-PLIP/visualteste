@@ -26,7 +26,7 @@ export default function Stock() {
   const [avail, setAvail] = useState<Availability>('')
   const [order, setOrder] = useState<'asc' | 'desc'>('asc')
   const [view, setView] = useState<'cards' | 'table'>('cards')
-  const [form, setForm] = useState<{ product?: Product } | null>(null)
+  const [form, setForm] = useState<{ product?: Product; initialProduct?: Product } | null>(null)
   const [stock, setStock] = useState<Product | null>(null)
   const [selected, setSelected] = useState<Product[] | null>(null)
 
@@ -155,26 +155,61 @@ export default function Stock() {
         </div>
       )}
 
-      {selected && <Modal title={selected[0].name} onClose={() => setSelected(null)} wide>
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-          <div className="h-64 overflow-hidden rounded-lg bg-white/50 sm:h-80"><ProductImage path={selected[0].image_path} alt={selected[0].name} /></div>
-          <div>
-            <h3 className="text-xl font-bold" style={{ color: theme.main }}>{selected[0].name}</h3>
-            <p className="text-sm text-tinta/70">{selected[0].brand}</p>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[540px] text-left text-sm">
-                <thead className="border-b border-tinta/15 text-xs text-tinta/70"><tr><th className="p-2">Tamanho</th><th className="p-2 text-right">Quantidade</th><th className="p-2 text-right">Custo</th><th className="p-2 text-right">Valor de venda</th><th className="p-2">Ações</th></tr></thead>
-                <tbody>{selected.map((p) => <tr key={p.id} className="border-b border-tinta/10 last:border-0">
-                  <td className="p-2 font-semibold">{p.size}</td><td className="p-2 text-right">{p.quantity}</td>
-                  <td className="p-2 text-right">{p.cost_cents == null ? 'Não informado' : formatBRL(p.cost_cents)}</td><td className="p-2 text-right">{formatBRL(p.price_cents)}</td>
-                  <td className="p-2"><div className="flex gap-1"><button type="button" className="btn-outline !min-h-[34px] !px-2" onClick={() => { setSelected(null); setForm({ product: p }) }}>Editar</button><button type="button" className="btn-primary !min-h-[34px] !px-2" onClick={() => { setSelected(null); setStock(p) }}>Estoque</button></div></td>
-                </tr>)}</tbody>
-              </table>
+      {selected && <Modal title="Detalhes do produto" onClose={() => setSelected(null)} wide>
+        <div className="space-y-5">
+          <section className="grid gap-4 rounded-xl border border-tinta/10 p-3 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
+            <div className="h-48 overflow-hidden rounded-lg bg-white/50 sm:h-44">
+              <ProductImage path={selected[0].image_path} alt={selected[0].name} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-tinta/55">Produto</p>
+              <h3 className="mt-1 break-words text-2xl font-bold" style={{ color: theme.main }}>{selected[0].name}</h3>
+              <p className="mt-1 break-words text-base text-tinta/70">{selected[0].brand}</p>
+              <p className="mt-3 text-sm">Categoria: <strong>{theme.label}</strong></p>
+              <p className="text-sm">Tamanhos cadastrados: <strong>{selected.map((p) => p.size).join(', ')}</strong></p>
+            </div>
+          </section>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section className="min-w-0 rounded-xl border border-tinta/10 p-3">
+              <h4 className="mb-3 text-lg font-bold" style={{ color: theme.main }}>Tamanho e quantidade</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-tinta/15 text-xs text-tinta/70"><tr><th className="p-2">Tamanho</th><th className="p-2 text-right">Quantidade</th></tr></thead>
+                  <tbody>{selected.map((p) => <tr key={p.id} className="border-b border-tinta/10 last:border-0">
+                    <td className="p-2 font-semibold">{p.size}</td><td className="p-2 text-right">{p.quantity}</td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="min-w-0 rounded-xl border border-tinta/10 p-3">
+              <h4 className="mb-3 text-lg font-bold" style={{ color: theme.main }}>Custo e valor de venda</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-tinta/15 text-xs text-tinta/70"><tr><th className="p-2">Tamanho</th><th className="p-2 text-right">Custo</th><th className="p-2 text-right">Venda</th></tr></thead>
+                  <tbody>{selected.map((p) => <tr key={p.id} className="border-b border-tinta/10 last:border-0">
+                    <td className="p-2 font-semibold">{p.size}</td>
+                    <td className="p-2 text-right whitespace-nowrap">{p.cost_cents == null ? 'Não informado' : formatBRL(p.cost_cents)}</td>
+                    <td className="p-2 text-right whitespace-nowrap">{formatBRL(p.price_cents)}</td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <div className="flex flex-wrap justify-between gap-2 border-t border-tinta/10 pt-4">
+            <button type="button" className="btn-primary" onClick={() => { setForm({ initialProduct: selected[0] }); setSelected(null) }}>
+              <Plus size={18} /> Cadastrar novo tamanho
+            </button>
+            <div className="flex flex-wrap gap-2">
+              {selected.map((p) => <button key={p.id} type="button" className="btn-outline" onClick={() => { setForm({ product: p }); setSelected(null) }}>Editar {p.size}</button>)}
+              {selected.length === 1 && <button type="button" className="btn-outline" onClick={() => { setStock(selected[0]); setSelected(null) }}>Adicionar estoque</button>}
             </div>
           </div>
         </div>
       </Modal>}
-      {form && <ProductForm product={form.product} defaultCategory={theme.key} onClose={() => setForm(null)} />}
+      {form && <ProductForm product={form.product} initialProduct={form.initialProduct} defaultCategory={theme.key} onClose={() => setForm(null)} />}
       {stock && <StockModal product={stock} onClose={() => setStock(null)} />}
     </div>
   )
