@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, ImageOff } from 'lucide-react'
+import { useState } from 'react'
 import { CATEGORY_LIST } from '@/lib/categories'
 import { formatBRL } from '@/lib/money'
 import { homeSummary } from '@/services/products'
