@@ -48,7 +48,7 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
       quantity: 0, price: centsToInput(initialProduct.price_cents), cost: centsToInput(initialProduct.cost_cents),
       min_stock: initialProduct.min_stock, sku: '', barcode: '', supplier: initialProduct.supplier ?? '',
       description: initialProduct.description ?? '', notes: initialProduct.notes ?? '',
-    } : { category: defaultCategory, quantity: 0, min_stock: 0, price: '', cost: '' } as Partial<ProductFormValues>,
+    } as Partial<ProductFormValues> : { category: defaultCategory, quantity: 0, min_stock: 0, price: '', cost: '' } as Partial<ProductFormValues>,
   })
 
   const save = useMutation({
@@ -93,7 +93,7 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
   const archive = useMutation({
     mutationFn: async () => {
       await archiveProduct(product!.id)
-      await removeImage(product!.image_path)
+      // Não apagar a foto do Storage: outros tamanhos do mesmo produto podem reutilizar o mesmo arquivo.
     },
     onSuccess: () => { toast('ok', 'Produto arquivado. O histórico foi preservado.'); qc.invalidateQueries({ queryKey: ['products'] }); qc.invalidateQueries({ queryKey: ['home'] }); onClose() },
     onError: (e) => { setConfirmArchive(false); setError(errorMessage(e)) },
