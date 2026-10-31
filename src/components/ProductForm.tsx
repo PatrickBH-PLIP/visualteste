@@ -31,31 +31,37 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
   const fileKey = useRef(newId())
 
   const [file, setFile] = useState<File | null>(null)
+  const [customColor, setCustomColor] = useState(product && !['Preto','Branco','Cinza','Vermelho','Rosa','Terracota','Bege','Amarelo','Azul'].includes(product.color ?? '') ? product.color ?? '' : '')
+  const [customColorHex, setCustomColorHex] = useState(product?.color_hex ?? initialProduct?.color_hex ?? '#d7c8bb')
   const [removeCurrent, setRemoveCurrent] = useState(false)
   const [stage, setStage] = useState<Stage>('idle')
   const [error, setError] = useState<string | null>(null)
   const [confirmArchive, setConfirmArchive] = useState(false)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<ProductFormValues>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: product ? {
-      name: product.name, category: product.category, brand: product.brand, size: product.size, material: product.material,
+      name: product.name, category: product.category, brand: product.brand, size: product.size, color: product.color ?? '', material: product.material,
       quantity: product.quantity, price: centsToInput(product.price_cents), cost: centsToInput(product.cost_cents),
       min_stock: product.min_stock, sku: product.sku ?? '', barcode: product.barcode ?? '', supplier: product.supplier ?? '',
       description: product.description ?? '', notes: product.notes ?? '',
     } : initialProduct ? {
-      name: initialProduct.name, category: initialProduct.category, brand: initialProduct.brand, size: '', material: initialProduct.material,
+      name: initialProduct.name, category: initialProduct.category, brand: initialProduct.brand, size: '', color: initialProduct.color ?? '', material: initialProduct.material,
       quantity: 0, price: centsToInput(initialProduct.price_cents), cost: centsToInput(initialProduct.cost_cents),
       min_stock: initialProduct.min_stock, sku: '', barcode: '', supplier: initialProduct.supplier ?? '',
       description: initialProduct.description ?? '', notes: initialProduct.notes ?? '',
-    } as Partial<ProductFormValues> : { category: defaultCategory, quantity: 0, min_stock: 0, price: '', cost: '' } as Partial<ProductFormValues>,
+    } as Partial<ProductFormValues> : { category: defaultCategory, color: 'Preto', quantity: 0, min_stock: 0, price: '', cost: '' } as Partial<ProductFormValues>,
   })
+
+  const colorValue = watch('color') || 'Preto'
+  const colorOptions = [{name:'Preto',hex:'#111111'},{name:'Branco',hex:'#ffffff'},{name:'Cinza',hex:'#888888'},{name:'Vermelho',hex:'#e53935'},{name:'Rosa',hex:'#f48fb1'},{name:'Terracota',hex:'#c46d50'},{name:'Bege',hex:'#d8c3a5'},{name:'Amarelo',hex:'#fdd835'},{name:'Azul',hex:'#1976d2'}]
+  const selectedPreset = colorOptions.find(c => c.name === colorValue)
 
   const save = useMutation({
     mutationFn: async (v: ProductFormValues) => {
       setError(null)
       const base = {
-        category: v.category, name: v.name, brand: v.brand, size: v.size, material: v.material,
+        category: v.category, name: v.name, brand: v.brand, size: v.size, color: v.category === 'sex_shop' ? null : (customColor.trim() || v.color || 'Preto'), color_hex: v.category === 'sex_shop' ? null : (customColor.trim() ? customColorHex : selectedPreset?.hex ?? product?.color_hex ?? initialProduct?.color_hex ?? '#d7c8bb'), material: v.material,
         price_cents: parseBRL(v.price)!, cost_cents: v.cost ? parseBRL(v.cost) : null, min_stock: v.min_stock,
       }
       let newPath: string | null = null
@@ -70,7 +76,7 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
         } else {
           const image_path = file ? newPath : removeCurrent ? null : product!.image_path
           await updateProduct(product!.id, {
-            ...base, sku: v.sku || null, barcode: v.barcode || null, supplier: v.supplier || null,
+            ...base, color: v.category === 'sex_shop' ? null : (customColor.trim() || v.color || 'Preto'), sku: v.sku || null, barcode: v.barcode || null, supplier: v.supplier || null,
             description: v.description || null, notes: v.notes || null, image_path,
           })
           // arquivo antigo só é apagado DEPOIS de o banco apontar para o novo (sem órfãos / sem perda)
@@ -129,6 +135,25 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
               <option value="" disabled>Selecione</option>{SIZES.map((s) => <option key={s}>{s}</option>)}
             </select>
           </Field>
+          {watch('category') !== 'sex_shop' && <div className="sm:col-span-2 space-y-2">
+            <span className="label">Cor *</span>
+            <div className="flex flex-wrap gap-2">
+              {colorOptions.map((c) => <button key={c.name} type="button" onClick={() => { setValue('color', c.name, { shouldDirty: true, shouldValidate: true }); setCustomColor(''); setCustomColorHex(c.hex) }}
+                className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm ${colorValue === c.name && !customColor ? 'border-chilli ring-2 ring-chilli/20' : 'border-tinta/15'}`}>
+                <span className="h-4 w-4 rounded-full border border-tinta/20" style={{ backgroundColor: c.hex }} />{c.name}
+              </button>)}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-sm font-medium text-tinta/70">Cadastrar nova cor</label>
+              <input className="input !w-auto min-w-0 flex-1" placeholder="Nome da cor (ex.: Azul petróleo)" value={customColor} onChange={(e) => setCustomColor(e.target.value)} />
+              <label className="flex items-center gap-2 rounded-xl border border-tinta/15 px-3 py-2 text-sm">
+                <span>Escolher tonalidade</span>
+                <input aria-label="Escolher tonalidade da nova cor" className="h-9 w-10 cursor-pointer rounded border-0 bg-transparent p-0" type="color" value={customColorHex} onChange={(e) => setCustomColorHex(e.target.value)} />
+              </label>
+              {customColor.trim() && <span className="flex items-center gap-2 text-sm"><span className="h-4 w-4 rounded-full border border-tinta/20" style={{ backgroundColor: customColorHex }} />{customColor} · {customColorHex}</span>}
+            </div>
+            <input type="hidden" {...register('color')} />
+          </div>}
           <Field label="Material *" error={errors.material?.message}><input className="input" {...register('material')} placeholder="Algodão, renda, microfibra…" /></Field>
           {!editing && <Field label="Quantidade inicial *" error={errors.quantity?.message}><input className="input" type="number" inputMode="numeric" min={0} {...register('quantity')} /></Field>}
           {editing && <Field label="Quantidade em estoque" hint="Para alterar, use “Adicionar ao estoque” ou registre uma venda."><input className="input opacity-70" value={product!.quantity} readOnly /></Field>}

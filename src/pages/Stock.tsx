@@ -108,7 +108,7 @@ export default function Stock() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {groupedRows.map((group) => {
             const first = group[0]
-            const sizes = group.map((p) => p.size)
+            const sizes = Array.from(new Set(group.map((p) => p.size)))
             const range = sizes.length === 1 ? sizes[0] : `${sizes[0]} - ${sizes[sizes.length - 1]}`
             const quantity = group.reduce((sum, p) => sum + p.quantity, 0)
             return <button key={first.id} type="button" onClick={() => setSelected(group)}
@@ -166,11 +166,11 @@ export default function Stock() {
               <h3 className="mt-1 break-words text-2xl font-bold" style={{ color: theme.main }}>{selected[0].name}</h3>
               <p className="mt-1 break-words text-base text-tinta/70">{selected[0].brand}</p>
               <p className="mt-3 text-sm">Categoria: <strong>{theme.label}</strong></p>
-              <p className="text-sm">Tamanhos cadastrados: <strong>{selected.map((p) => p.size).join(', ')}</strong></p>
+              <p className="text-sm">Tamanhos cadastrados: <strong>{Array.from(new Set(selected.map((p) => p.size))).join(', ')}</strong></p>
             </div>
           </section>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-3">
             <section className="min-w-0 rounded-xl border border-tinta/10 p-3">
               <h4 className="mb-3 text-lg font-bold" style={{ color: theme.main }}>Tamanho e quantidade</h4>
               <div className="overflow-x-auto">
@@ -180,6 +180,16 @@ export default function Stock() {
                     <td className="p-2 font-semibold">{p.size}</td><td className="p-2 text-right">{p.quantity}</td>
                   </tr>)}</tbody>
                 </table>
+              </div>
+            </section>
+
+            <section className="min-w-0 rounded-xl border border-tinta/10 p-3">
+              <h4 className="mb-3 text-lg font-bold" style={{ color: theme.main }}>Cores e tamanhos</h4>
+              <div className="space-y-2">
+                {selected.slice().sort((a,b) => SIZES.indexOf(a.size) - SIZES.indexOf(b.size) || (a.color ?? '').localeCompare(b.color ?? '', 'pt-BR')).map((p) => <div key={p.id} className="flex items-center justify-between gap-2 border-b border-tinta/10 pb-2 last:border-0">
+                  <div className="min-w-0"><p className="font-semibold">{p.size}</p><p className="flex items-center gap-2 text-sm text-tinta/70">{p.color && <span className="h-3.5 w-3.5 rounded-full border border-tinta/20" style={{backgroundColor: p.color}} />} {p.color || 'Cor não informada'}</p></div>
+                  <span className="shrink-0 text-sm font-bold">{p.quantity} un.</span>
+                </div>)}
               </div>
             </section>
 

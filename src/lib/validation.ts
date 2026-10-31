@@ -11,6 +11,8 @@ export const productSchema = z.object({
   category: z.enum(['feminino', 'masculino', 'lingerie', 'sex_shop']),
   brand: z.string().trim().min(1, 'Informe a marca'),
   size: z.enum(SIZES, { errorMap: () => ({ message: 'Selecione o tamanho' }) }),
+  color: z.string().trim().optional(),
+  color_hex: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Escolha uma cor válida').optional(),
   material: z.string().trim().min(1, 'Informe o material'),
   quantity: z.coerce.number({ invalid_type_error: 'Informe a quantidade' }).int('Use número inteiro').min(0, 'Não pode ser negativa'),
   price: money('Preço', true).refine((v) => v !== '', 'Informe o preço de venda'),
