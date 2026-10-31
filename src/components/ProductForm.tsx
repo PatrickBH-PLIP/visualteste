@@ -32,8 +32,6 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
 
   const [file, setFile] = useState<File | null>(null)
   const [customColor, setCustomColor] = useState('')
-  const colorValue = watch('color') || 'Preto'
-  const colorOptions = [{name:'Preto',hex:'#111111'},{name:'Branco',hex:'#ffffff'},{name:'Cinza',hex:'#888888'},{name:'Vermelho',hex:'#e53935'},{name:'Rosa',hex:'#f48fb1'},{name:'Terracota',hex:'#c46d50'},{name:'Bege',hex:'#d8c3a5'},{name:'Amarelo',hex:'#fdd835'},{name:'Azul',hex:'#1976d2'}]
   const [removeCurrent, setRemoveCurrent] = useState(false)
   const [stage, setStage] = useState<Stage>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +51,9 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
       description: initialProduct.description ?? '', notes: initialProduct.notes ?? '',
     } as Partial<ProductFormValues> : { category: defaultCategory, color: 'Preto', quantity: 0, min_stock: 0, price: '', cost: '' } as Partial<ProductFormValues>,
   })
+
+  const colorValue = watch('color') || 'Preto'
+  const colorOptions = [{name:'Preto',hex:'#111111'},{name:'Branco',hex:'#ffffff'},{name:'Cinza',hex:'#888888'},{name:'Vermelho',hex:'#e53935'},{name:'Rosa',hex:'#f48fb1'},{name:'Terracota',hex:'#c46d50'},{name:'Bege',hex:'#d8c3a5'},{name:'Amarelo',hex:'#fdd835'},{name:'Azul',hex:'#1976d2'}]
 
   const save = useMutation({
     mutationFn: async (v: ProductFormValues) => {
