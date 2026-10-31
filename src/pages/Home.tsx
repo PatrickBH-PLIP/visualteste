@@ -65,7 +65,7 @@ export default function Home() {
 
       {s.isError && <ErrorBanner message="Não foi possível carregar o resumo." onRetry={() => s.refetch()} />}
       <button type="button" aria-label="Adicionar estoque" title="Adicionar estoque" onClick={() => setStockIntakeOpen(true)}
-        className="fixed bottom-6 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-xl transition hover:scale-105 sm:hidden"
+        className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-xl transition hover:scale-105 sm:hidden"
         style={{ background: '#fa300f', boxShadow: '0 8px 24px #0003' }}><Box size={25} /></button>
       {stockIntakeOpen && <StockIntakeModal onClose={() => setStockIntakeOpen(false)} />}
       {stats && (
