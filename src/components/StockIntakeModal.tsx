@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Box, ImageOff, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, ImageOff, Plus, Trash2 } from 'lucide-react'
 import { Modal } from './Modal'
 import { ErrorBanner } from './ui'
 import { CATEGORY_LIST } from '@/lib/categories'
@@ -12,6 +12,17 @@ import { SIZES, type Product } from '@/types'
 
 type Entry = { product: Product; quantity: number }
 type ProductGroup = { key: string; product: Product; variants: Product[] }
+
+function colorHex(value: string | null) {
+  const key = (value ?? '').trim().toLocaleLowerCase('pt-BR')
+  const colors: Record<string, string> = {
+    preto: '#171717', branco: '#ffffff', cinza: '#888888', vermelho: '#e53935',
+    rosa: '#f48fb1', terracota: '#c46d50', bege: '#d8c3a5', amarelo: '#fdd835',
+    azul: '#1976d2', verde: '#2e7d32', roxo: '#7e57c2', marrom: '#795548',
+    vinho: '#722f37', nude: '#d8b49c', lilás: '#b39ddb', laranja: '#ef6c00',
+  }
+  return colors[key] ?? '#d7c8bb'
+}
 
 function productKey(p: Product) {
   return [p.category, p.name.trim().toLocaleLowerCase('pt-BR'), p.brand.trim().toLocaleLowerCase('pt-BR'), p.image_path ?? ''].join('|')
@@ -125,12 +136,13 @@ export function StockIntakeModal({ onClose }: { onClose: () => void }) {
                 const active = selectedKey === group.key
                 const categoryLabel = CATEGORY_LIST.find(c => c.key === group.product.category)?.label ?? group.product.category
                 return <button type="button" key={group.key} onClick={() => { setSelectedKey(group.key); setSize(''); setQuantities({}); setError(null) }}
-                  className={`overflow-hidden rounded-xl border text-left transition ${active ? 'border-chilli ring-2 ring-chilli/25' : 'border-tinta/15 hover:border-tinta/35'}`}>
-                  {photo(group.product, 'aspect-square w-full object-cover')}
-                  <div className="space-y-0.5 p-2.5">
+                  className={`relative overflow-hidden rounded-2xl border bg-white/55 text-left shadow-sm transition ${active ? 'border-chilli ring-2 ring-chilli/30 shadow-md' : 'border-tinta/15 hover:border-tinta/35'}`}>
+                  {photo(group.product, 'aspect-[4/3] w-full object-cover')}
+                  {active && <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-chilli text-white shadow"><Check size={16}/></span>}
+                  <div className="space-y-1 p-3">
                     <p className="line-clamp-2 text-sm font-semibold">{group.product.name}</p>
-                    <p className="text-xs text-tinta/65">{categoryLabel}</p>
-                    <p className="text-xs text-tinta/65">Marca: {group.product.brand || '—'}</p>
+                    <p className="text-xs font-medium text-tinta/65">{categoryLabel}</p>
+                    <p className="truncate text-xs text-tinta/65">Marca: {group.product.brand || '—'}</p>
                   </div>
                 </button>
               })}
@@ -138,27 +150,38 @@ export function StockIntakeModal({ onClose }: { onClose: () => void }) {
         </section>
 
         {selectedGroup && <section className="space-y-3 rounded-xl border border-tinta/10 p-3">
-          <h3 className="font-semibold">2. Escolha o tamanho</h3>
-          <div className="flex flex-wrap gap-2">
-            {sizes.map(s => <button type="button" key={s} onClick={() => { setSize(s); setQuantities({}); setError(null) }}
-              className={`min-w-12 rounded-lg border px-4 py-2 text-sm font-semibold ${size === s ? 'border-chilli bg-chilli/10 text-chilli' : 'border-tinta/15'}`}>{s}</button>)}
+          <div><h3 className="font-semibold">2. Escolha o tamanho</h3><p className="text-xs text-tinta/60">Toque no tamanho que deseja repor.</p></div>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {sizes.map(s => {
+              const count = selectedGroup?.variants.filter(p => p.size === s).reduce((n, p) => n + p.quantity, 0) ?? 0
+              return <button type="button" key={s} onClick={() => { setSize(s); setQuantities({}); setError(null) }}
+                className={`rounded-xl border px-3 py-3 text-center transition ${size === s ? 'border-chilli bg-chilli/10 text-chilli ring-2 ring-chilli/20' : 'border-tinta/15 bg-white/50 hover:border-tinta/35'}`}>
+                <span className="block text-base font-bold">{s}</span><span className="mt-0.5 block text-[11px] opacity-65">{count} em estoque</span>
+              </button>
+            })}
           </div>
         </section>}
 
         {!!size && <section className="space-y-3 rounded-xl border border-tinta/10 p-3">
-          <h3 className="font-semibold">3. Cores e 4. Quantidades</h3>
+          <div><h3 className="font-semibold">3. Escolha as cores e quantidades</h3><p className="text-xs text-tinta/60">Cada cor possui sua própria quantidade.</p></div>
           <p className="text-sm text-tinta/60">Informe quantas unidades existem de cada cor para o tamanho {size}. Deixe em branco as cores que não deseja adicionar.</p>
-          {sizeVariants.map(variant => <div key={variant.id} className="flex items-center gap-3 rounded-lg bg-white/50 p-2">
-            {photo(variant, 'h-12 w-12 shrink-0 rounded-md object-cover')}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{variant.color || 'Sem cor cadastrada'}</p>
-              <p className="text-xs text-tinta/60">Estoque atual: {variant.quantity}</p>
+          {sizeVariants.map(variant => {
+            const chosen = Number(quantities[variant.id] ?? 0) > 0
+            return <div key={variant.id} className={`flex items-center gap-3 rounded-xl border p-3 transition ${chosen ? 'border-chilli/50 bg-chilli/5' : 'border-tinta/10 bg-white/55'}`}>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white shadow-sm ring-1 ring-tinta/15" style={{ backgroundColor: colorHex(variant.color) }} aria-label={`Amostra da cor ${variant.color || 'sem cor'}`} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">{variant.color || 'Sem cor cadastrada'}</p>
+                <p className="text-xs text-tinta/60">Estoque atual: {variant.quantity}</p>
+              </div>
+              <label className="w-[5.5rem] shrink-0"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-tinta/55">Adicionar</span>
+                <input className="input !px-2 text-center" type="number" min={0} step={1} inputMode="numeric" placeholder="0"
+                  aria-label={`Quantidade da cor ${variant.color || 'sem cor'}`} value={quantities[variant.id] ?? ''}
+                  onChange={e => setQuantities(current => ({ ...current, [variant.id]: e.target.value }))} />
+              </label>
+              {chosen && <Check size={17} className="shrink-0 text-chilli"/>}
             </div>
-            <input className="input !w-24" type="number" min={0} step={1} inputMode="numeric" placeholder="Qtd."
-              aria-label={`Quantidade da cor ${variant.color || 'sem cor'}`} value={quantities[variant.id] ?? ''}
-              onChange={e => setQuantities(current => ({ ...current, [variant.id]: e.target.value }))} />
-          </div>)}
-          <button type="button" className="btn-primary" onClick={addEntry}><Plus size={17}/> Adicionar cores deste tamanho</button>
+          })}
+          <button type="button" className="btn-primary w-full justify-center" onClick={addEntry}><Plus size={17}/> Adicionar cores deste tamanho</button>
         </section>}
 
         {entries.length > 0 && <section className="space-y-2">
