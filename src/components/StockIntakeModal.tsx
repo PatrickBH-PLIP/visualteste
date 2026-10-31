@@ -183,7 +183,7 @@ export function StockIntakeModal({ onClose }: { onClose: () => void }) {
           {sizeVariants.map(variant => {
             const chosen = Number(quantities[variant.id] ?? 0) > 0
             return <div key={variant.id} className={`flex items-center gap-3 rounded-xl border p-3 transition ${chosen ? 'border-chilli/50 bg-chilli/5' : 'border-tinta/10 bg-white/55'}`}>
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white shadow-sm ring-1 ring-tinta/15" style={{ backgroundColor: colorHex(variant.color) }} aria-label={`Amostra da cor ${variant.color || 'sem cor'}`} />
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white shadow-sm ring-1 ring-tinta/15" style={{ backgroundColor: variant.color_hex || colorHex(variant.color) }} aria-label={`Amostra da cor ${variant.color || 'sem cor'}`} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{variant.color || 'Sem cor cadastrada'}</p>
                 <p className="text-xs text-tinta/60">Estoque atual: {variant.quantity}</p>
