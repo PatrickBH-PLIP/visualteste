@@ -72,10 +72,20 @@ export function ProductPicker({ onAdd }: { onAdd: (item: CartItem) => void }) {
     <div className="card space-y-3 p-4">
       <h3 className="text-lg">Adicionar produto</h3>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label><span className="label">1. Categoria</span>
+        <label className="hidden md:block"><span className="label">1. Categoria</span>
           <select className="input" value={category} onChange={(e) => { setCategory(e.target.value as Category); setGroup(''); setProductId(''); setSelectedSize('') }}>
             <option value="">Selecione</option>{CATEGORY_LIST.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select></label>
+        <div className="md:hidden sm:col-span-2">
+          <span className="label">1. Categoria</span>
+          <div className="grid grid-cols-2 gap-2">
+            {CATEGORY_LIST.map(c => <button key={c.key} type="button" onClick={() => { setCategory(c.key); setGroup(''); setProductId(''); setSelectedSize('') }}
+              className={`overflow-hidden rounded-lg border text-left ${category === c.key ? 'border-chilli ring-2 ring-chilli/20' : 'border-tinta/15'}`}>
+              <img src={`/assets/categories/${c.slug}.jpg`} alt="" className="aspect-[4/3] w-full object-cover" />
+              <span className="block p-2 text-sm font-semibold" style={{color:c.main}}>{c.label}</span>
+            </button>)}
+          </div>
+        </div>
         <label className="hidden md:block relative"><span className="label">2. Produto</span>
           <button type="button" className="input flex items-center justify-between gap-2 text-left" disabled={!category || q.isLoading}
             onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen}>
@@ -99,11 +109,19 @@ export function ProductPicker({ onAdd }: { onAdd: (item: CartItem) => void }) {
             {!groups.length && <p className="p-3 text-sm text-tinta/60">Nenhum produto nesta categoria.</p>}
           </div>}
         </label>
-        <label className="md:hidden"><span className="label">2. Produto</span>
-          <select className="input" value={group} disabled={!category || q.isLoading} onChange={(e) => { setGroup(e.target.value); setProductId(''); setSelectedSize('') }}>
-            <option value="">{q.isLoading ? 'Carregando…' : 'Selecione'}</option>
-            {groups.map(([k, list]) => <option key={k} value={k}>{list[0].name} — {list[0].brand}</option>)}
-          </select></label>
+        <div className="hidden md:hidden sm:col-span-2"><span className="label">2. Produto</span></div>
+        <div className="md:hidden sm:col-span-2">
+          <span className="label">2. Escolha o produto</span>
+          {!category ? <p className="text-sm text-tinta/60">Selecione uma categoria acima.</p> : q.isLoading ? <p className="text-sm text-tinta/60">Carregando produtos…</p> :
+          <div className="grid grid-cols-2 gap-2">
+            {groups.map(([k,list]) => { const p=list[0]; const active=group===k; return <button key={k} type="button" onClick={()=>{setGroup(k);setProductId('');setSelectedSize('')}}
+              className={`overflow-hidden rounded-lg border text-left ${active?'border-chilli ring-2 ring-chilli/20':'border-tinta/15'}`}>
+              <div className="aspect-square bg-white/50">{p.image_path && imageUrls.data?.[p.image_path] ? <img src={imageUrls.data[p.image_path]} alt="" className="h-full w-full object-cover"/> : <div className="flex h-full items-center justify-center text-xs text-tinta/45">Sem foto</div>}</div>
+              <span className="block p-2"><span className="block line-clamp-2 text-sm font-semibold">{p.name}</span><span className="block truncate text-xs text-tinta/60">{p.brand}</span></span>
+            </button>})}
+            {!groups.length && <p className="col-span-2 text-sm text-tinta/60">Nenhum produto nesta categoria.</p>}
+          </div>}
+        </div>
         <label><span className="label">3. Tamanho</span>
           <select className="input" value={selectedSize} disabled={!group} onChange={(e) => { setSelectedSize(e.target.value); setProductId('') }}>
             <option value="">Selecione</option>
