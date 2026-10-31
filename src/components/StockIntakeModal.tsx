@@ -25,13 +25,14 @@ function colorHex(value: string | null) {
 }
 
 function productKey(p: Product) {
-  return [p.category, p.name.trim().toLocaleLowerCase('pt-BR'), p.brand.trim().toLocaleLowerCase('pt-BR'), p.image_path ?? ''].join('|')
+  return [p.category, p.name.trim().toLocaleLowerCase('pt-BR')].join('|')
 }
 
 export function StockIntakeModal({ onClose }: { onClose: () => void }) {
   const { companyId } = useCompany()
   const qc = useQueryClient()
   const toast = useToast()
+  const [selectedCategory, setSelectedCategory] = useState<Product['category'] | ''>('')
   const [selectedKey, setSelectedKey] = useState('')
   const [size, setSize] = useState('')
   const [quantities, setQuantities] = useState<Record<string, string>>({})
@@ -61,7 +62,8 @@ export function StockIntakeModal({ onClose }: { onClose: () => void }) {
     }
     return Array.from(map.values()).sort((a, b) => a.product.name.localeCompare(b.product.name, 'pt-BR'))
   }, [q.data])
-  const selectedGroup = groups.find(g => g.key === selectedKey)
+  const categoryGroups = groups.filter(g => g.product.category === selectedCategory)
+  const selectedGroup = categoryGroups.find(g => g.key === selectedKey)
   const sizes = useMemo(() => {
     if (!selectedGroup) return []
     return Array.from(new Set(selectedGroup.variants.map(p => p.size))).sort((a, b) => SIZES.indexOf(a as typeof SIZES[number]) - SIZES.indexOf(b as typeof SIZES[number]))
@@ -128,29 +130,42 @@ export function StockIntakeModal({ onClose }: { onClose: () => void }) {
       {error && <ErrorBanner message={error} />}
       {!review ? <>
         <section className="space-y-3">
-          <div><h3 className="font-semibold">1. Selecione o produto pela foto</h3><p className="text-sm text-tinta/60">O nome, a categoria e a marca aparecem abaixo de cada imagem.</p></div>
+          <div><h3 className="font-semibold">1. Selecione a categoria</h3><p className="text-sm text-tinta/60">Escolha uma categoria para visualizar os produtos.</p></div>
           {q.isLoading ? <p className="text-sm text-tinta/60">Carregando produtos…</p>
             : !groups.length ? <p className="text-sm text-tinta/60">Nenhum produto cadastrado.</p>
-            : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {groups.map(group => {
-                const active = selectedKey === group.key
-                const categoryLabel = CATEGORY_LIST.find(c => c.key === group.product.category)?.label ?? group.product.category
-                return <button type="button" key={group.key} onClick={() => { setSelectedKey(group.key); setSize(''); setQuantities({}); setError(null) }}
-                  className={`relative overflow-hidden rounded-2xl border bg-white/55 text-left shadow-sm transition ${active ? 'border-chilli ring-2 ring-chilli/30 shadow-md' : 'border-tinta/15 hover:border-tinta/35'}`}>
-                  {photo(group.product, 'aspect-[4/3] w-full object-cover')}
-                  {active && <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-chilli text-white shadow"><Check size={16}/></span>}
-                  <div className="space-y-1 p-3">
-                    <p className="line-clamp-2 text-sm font-semibold">{group.product.name}</p>
-                    <p className="text-xs font-medium text-tinta/65">{categoryLabel}</p>
-                    <p className="truncate text-xs text-tinta/65">Marca: {group.product.brand || '—'}</p>
-                  </div>
+            : <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {CATEGORY_LIST.filter(category => groups.some(group => group.product.category === category.key)).map(category => {
+                const active = selectedCategory === category.key
+                const total = groups.filter(group => group.product.category === category.key).length
+                return <button type="button" key={category.key} onClick={() => { setSelectedCategory(category.key); setSelectedKey(''); setSize(''); setQuantities({}); setError(null) }}
+                  className={`rounded-2xl border p-4 text-left transition ${active ? 'border-chilli bg-chilli/10 ring-2 ring-chilli/25' : 'border-tinta/15 bg-white/55 hover:border-tinta/35'}`}>
+                  <p className="font-semibold">{category.label}</p><p className="mt-1 text-xs text-tinta/60">{total} produto(s)</p>
                 </button>
               })}
             </div>}
         </section>
 
+        {selectedCategory && <section className="space-y-3">
+          <div><h3 className="font-semibold">2. Escolha o produto</h3><p className="text-sm text-tinta/60">Produtos com o mesmo nome aparecem agrupados.</p></div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {categoryGroups.map(group => {
+              const active = selectedKey === group.key
+              return <button type="button" key={group.key} onClick={() => { setSelectedKey(group.key); setSize(''); setQuantities({}); setError(null) }}
+                className={`relative overflow-hidden rounded-2xl border bg-white/55 text-left shadow-sm transition ${active ? 'border-chilli ring-2 ring-chilli/30 shadow-md' : 'border-tinta/15 hover:border-tinta/35'}`}>
+                {photo(group.product, 'aspect-[4/3] w-full object-cover')}
+                {active && <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-chilli text-white shadow"><Check size={16}/></span>}
+                <div className="space-y-1 p-3">
+                  <p className="line-clamp-2 text-sm font-semibold">{group.product.name}</p>
+                  <p className="truncate text-xs text-tinta/65">Marca: {group.product.brand || '—'}</p>
+                  <p className="text-xs text-tinta/60">{group.variants.length} variação(ões)</p>
+                </div>
+              </button>
+            })}
+          </div>
+        </section>}
+
         {selectedGroup && <section className="space-y-3 rounded-xl border border-tinta/10 p-3">
-          <div><h3 className="font-semibold">2. Escolha o tamanho</h3><p className="text-xs text-tinta/60">Toque no tamanho que deseja repor.</p></div>
+          <div><h3 className="font-semibold">3. Escolha o tamanho</h3><p className="text-xs text-tinta/60">Toque no tamanho que deseja repor.</p></div>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {sizes.map(s => {
               const count = selectedGroup?.variants.filter(p => p.size === s).reduce((n, p) => n + p.quantity, 0) ?? 0
@@ -163,7 +178,7 @@ export function StockIntakeModal({ onClose }: { onClose: () => void }) {
         </section>}
 
         {!!size && <section className="space-y-3 rounded-xl border border-tinta/10 p-3">
-          <div><h3 className="font-semibold">3. Escolha as cores e quantidades</h3><p className="text-xs text-tinta/60">Cada cor possui sua própria quantidade.</p></div>
+          <div><h3 className="font-semibold">4. Escolha as cores e quantidades</h3><p className="text-xs text-tinta/60">Cada cor possui sua própria quantidade.</p></div>
           <p className="text-sm text-tinta/60">Informe quantas unidades existem de cada cor para o tamanho {size}. Deixe em branco as cores que não deseja adicionar.</p>
           {sizeVariants.map(variant => {
             const chosen = Number(quantities[variant.id] ?? 0) > 0
