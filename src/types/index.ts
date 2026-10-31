@@ -17,6 +17,7 @@ export interface Product {
   brand: string
   size: Size
   color: string | null
+  color_hex: string | null
   material: string
   price_cents: number
   cost_cents: number | null
