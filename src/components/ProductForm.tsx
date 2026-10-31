@@ -32,7 +32,7 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
 
   const [file, setFile] = useState<File | null>(null)
   const [customColor, setCustomColor] = useState(product && !['Preto','Branco','Cinza','Vermelho','Rosa','Terracota','Bege','Amarelo','Azul'].includes(product.color ?? '') ? product.color ?? '' : '')
-  const [customColorHex, setCustomColorHex] = useState(product?.color_hex ?? '#d7c8bb')
+  const [customColorHex, setCustomColorHex] = useState(product?.color_hex ?? initialProduct?.color_hex ?? '#d7c8bb')
   const [removeCurrent, setRemoveCurrent] = useState(false)
   const [stage, setStage] = useState<Stage>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -61,7 +61,7 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
     mutationFn: async (v: ProductFormValues) => {
       setError(null)
       const base = {
-        category: v.category, name: v.name, brand: v.brand, size: v.size, color: v.category === 'sex_shop' ? null : (customColor.trim() || v.color || 'Preto'), color_hex: v.category === 'sex_shop' ? null : (customColor.trim() ? customColorHex : selectedPreset?.hex ?? product?.color_hex ?? '#d7c8bb'), material: v.material,
+        category: v.category, name: v.name, brand: v.brand, size: v.size, color: v.category === 'sex_shop' ? null : (customColor.trim() || v.color || 'Preto'), color_hex: v.category === 'sex_shop' ? null : (customColor.trim() ? customColorHex : selectedPreset?.hex ?? product?.color_hex ?? initialProduct?.color_hex ?? '#d7c8bb'), material: v.material,
         price_cents: parseBRL(v.price)!, cost_cents: v.cost ? parseBRL(v.cost) : null, min_stock: v.min_stock,
       }
       let newPath: string | null = null
