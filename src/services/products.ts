@@ -98,6 +98,7 @@ export interface ProductPayload {
   name: string
   brand: string
   size: string
+  color?: string | null
   material: string
   price_cents: number
   cost_cents: number | null
@@ -132,11 +133,16 @@ export async function createProduct(companyId: string, opId: string, payload: Pr
     p_company: companyId, p_op: opId, p: { ...payload, image_path: imagePath },
   })
   if (error) throw error
-  return data as { product_id: string }
+  const result = data as { product_id: string }
+  if (payload.color) {
+    const { error: colorError } = await supabase.from('products').update({ color: payload.color }).eq('id', result.product_id).eq('company_id', companyId)
+    if (colorError) throw colorError
+  }
+  return result
 }
 
 export interface ProductUpdate {
-  category: Category; name: string; brand: string; size: string; material: string
+  category: Category; name: string; brand: string; size: string; color?: string | null; material: string
   price_cents: number; cost_cents: number | null; min_stock: number
   sku: string | null; barcode: string | null; supplier: string | null
   description: string | null; notes: string | null; image_path: string | null
