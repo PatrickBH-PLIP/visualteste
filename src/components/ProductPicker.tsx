@@ -13,6 +13,7 @@ export interface CartItem {
   name: string
   brand: string
   size: string
+  color?: string | null
   quantity: number
   unit_price_cents: number
   /** estoque disponível visto na tela (só para aviso; o banco decide de verdade) */
