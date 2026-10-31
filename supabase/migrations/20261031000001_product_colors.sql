@@ -62,3 +62,34 @@ begin
     end if;
   end loop;
 end $$;
+
+-- A cor precisa ser gravada no INSERT transacional para permitir variantes do mesmo tamanho.
+create or replace function public.create_product(p_company uuid, p_op uuid, p jsonb)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare uid uuid; prev jsonb; pid uuid; qty int; res jsonb;
+begin
+  uid := public._require(p_company);
+  prev := public._begin_op(p_company, p_op);
+  if prev is not null then return prev; end if;
+  qty := coalesce((p->>'quantity')::int, 0);
+  if qty < 0 then raise exception 'A quantidade inicial não pode ser negativa.'; end if;
+  pid := coalesce((p->>'id')::uuid, gen_random_uuid());
+  insert into public.products (id, company_id, category, name, brand, size, color, material, price_cents, cost_cents,
+                               quantity, min_stock, sku, barcode, supplier, description, notes, image_path, created_by)
+  values (pid, p_company, (p->>'category')::public.product_category, trim(p->>'name'), trim(p->>'brand'),
+          p->>'size', nullif(trim(p->>'color'), ''), trim(p->>'material'), (p->>'price_cents')::int, nullif(p->>'cost_cents', '')::int,
+          0, coalesce((p->>'min_stock')::int, 0), nullif(trim(p->>'sku'), ''), nullif(trim(p->>'barcode'), ''),
+          nullif(trim(p->>'supplier'), ''), nullif(trim(p->>'description'), ''), nullif(trim(p->>'notes'), ''),
+          nullif(p->>'image_path', ''), uid);
+  if qty > 0 then
+    perform set_config('app.stock_write', 'on', true);
+    update public.products set quantity = qty where id = pid;
+    insert into public.inventory_movements (company_id, product_id, type, quantity_delta, quantity_before, quantity_after, reason, created_by)
+    values (p_company, pid, 'estoque_inicial', qty, 0, qty, 'Estoque inicial no cadastro', uid);
+  end if;
+  perform public._audit(p_company, 'product_create', 'products', pid, null, p);
+  res := jsonb_build_object('product_id', pid);
+  return public._end_op(p_company, p_op, 'create_product', res);
+exception when unique_violation then
+  raise exception 'Já existe um produto igual (mesmo nome, marca, tamanho e cor) ou o SKU já está em uso.';
+end $$;
