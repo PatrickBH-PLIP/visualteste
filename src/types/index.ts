@@ -16,6 +16,7 @@ export interface Product {
   name: string
   brand: string
   size: Size
+  color: string | null
   material: string
   price_cents: number
   cost_cents: number | null
@@ -61,6 +62,7 @@ export interface SaleItem {
   product_name: string
   brand: string
   size: string
+  color?: string | null
   category: Category
 }
 
