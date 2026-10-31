@@ -76,7 +76,7 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
         } else {
           const image_path = file ? newPath : removeCurrent ? null : product!.image_path
           await updateProduct(product!.id, {
-            ...base, color: v.category === 'sex_shop' ? null : (customColor.trim() || v.color || 'Preto'), color_hex: v.category === 'sex_shop' ? null : (customColor.trim() ? customColorHex : selectedPreset?.hex ?? product?.color_hex ?? '#d7c8bb'), sku: v.sku || null, barcode: v.barcode || null, supplier: v.supplier || null,
+            ...base, color: v.category === 'sex_shop' ? null : (customColor.trim() || v.color || 'Preto'), sku: v.sku || null, barcode: v.barcode || null, supplier: v.supplier || null,
             description: v.description || null, notes: v.notes || null, image_path,
           })
           // arquivo antigo só é apagado DEPOIS de o banco apontar para o novo (sem órfãos / sem perda)
