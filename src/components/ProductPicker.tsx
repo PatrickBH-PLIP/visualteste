@@ -13,6 +13,7 @@ export interface CartItem {
   name: string
   brand: string
   size: string
+  color?: string | null
   quantity: number
   unit_price_cents: number
   /** estoque disponível visto na tela (só para aviso; o banco decide de verdade) */
@@ -25,6 +26,7 @@ export function ProductPicker({ onAdd }: { onAdd: (item: CartItem) => void }) {
   const [category, setCategory] = useState<Category | ''>('')
   const [group, setGroup] = useState('')
   const [productId, setProductId] = useState('')
+  const [selectedSize, setSelectedSize] = useState('')
   const [qty, setQty] = useState('1')
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -48,29 +50,42 @@ export function ProductPicker({ onAdd }: { onAdd: (item: CartItem) => void }) {
     queryFn: () => signedUrls(Array.from(new Set((q.data ?? []).map((p) => p.image_path).filter((p): p is string => !!p)))),
     enabled: !!q.data?.length,
   })
-  const sizes = useMemo(
-    () => (groups.find(([k]) => k === group)?.[1] ?? []).slice().sort((a, b) => SIZES.indexOf(a.size) - SIZES.indexOf(b.size)),
+  const variants = useMemo(
+    () => (groups.find(([k]) => k === group)?.[1] ?? []).slice().sort((a, b) => SIZES.indexOf(a.size) - SIZES.indexOf(b.size) || (a.color ?? '').localeCompare(b.color ?? '', 'pt-BR')),
     [groups, group])
-  const product = sizes.find((p) => p.id === productId)
+  const sizes = useMemo(() => Array.from(new Set(variants.map(p => p.size))), [variants])
+  const colorVariants = variants.filter(p => p.size === selectedSize)
+  const colors = Array.from(new Set(colorVariants.map(p => p.color ?? '')))
+  const product = variants.find((p) => p.id === productId)
   const n = Number(qty)
   const validQty = Number.isInteger(n) && n > 0
   const overStock = !!product && validQty && n > product.quantity
 
   const add = () => {
     if (!product || !validQty) return
-    onAdd({ product_id: product.id, category: product.category, name: product.name, brand: product.brand, size: product.size,
+    onAdd({ product_id: product.id, category: product.category, name: product.name, brand: product.brand, size: product.size, color: product.color,
       quantity: n, unit_price_cents: product.price_cents, available: product.quantity })
-    setProductId(''); setQty('1')
+    setProductId(''); setSelectedSize(''); setQty('1')
   }
 
   return (
     <div className="card space-y-3 p-4">
       <h3 className="text-lg">Adicionar produto</h3>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label><span className="label">1. Categoria</span>
-          <select className="input" value={category} onChange={(e) => { setCategory(e.target.value as Category); setGroup(''); setProductId('') }}>
+        <label className="hidden md:block"><span className="label">1. Categoria</span>
+          <select className="input" value={category} onChange={(e) => { setCategory(e.target.value as Category); setGroup(''); setProductId(''); setSelectedSize('') }}>
             <option value="">Selecione</option>{CATEGORY_LIST.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select></label>
+        <div className="md:hidden sm:col-span-2">
+          <span className="label">1. Categoria</span>
+          <div className="grid grid-cols-2 gap-2">
+            {CATEGORY_LIST.map(c => <button key={c.key} type="button" onClick={() => { setCategory(c.key); setGroup(''); setProductId(''); setSelectedSize('') }}
+              className={`overflow-hidden rounded-lg border text-left ${category === c.key ? 'border-chilli ring-2 ring-chilli/20' : 'border-tinta/15'}`}>
+              <img src={`/assets/categories/${c.slug}.jpg`} alt="" className="aspect-[4/3] w-full object-cover" />
+              <span className="block p-2 text-sm font-semibold" style={{color:c.main}}>{c.label}</span>
+            </button>)}
+          </div>
+        </div>
         <label className="hidden md:block relative"><span className="label">2. Produto</span>
           <button type="button" className="input flex items-center justify-between gap-2 text-left" disabled={!category || q.isLoading}
             onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen}>
@@ -83,7 +98,7 @@ export function ProductPicker({ onAdd }: { onAdd: (item: CartItem) => void }) {
           {menuOpen && <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-lg border border-tinta/15 bg-bege p-1 shadow-xl">
             {groups.map(([k, list]) => {
               const p = list[0]
-              return <button key={k} type="button" onClick={() => { setGroup(k); setProductId(''); setMenuOpen(false) }}
+              return <button key={k} type="button" onClick={() => { setGroup(k); setProductId(''); setSelectedSize(''); setMenuOpen(false) }}
                 className={`flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-tinta/5 ${group === k ? 'bg-tinta/10' : ''}`}>
                 <div className="h-12 w-12 shrink-0 overflow-hidden rounded bg-white/50">
                   {p.image_path && imageUrls.data?.[p.image_path] ? <img src={imageUrls.data[p.image_path]} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-tinta/50">Sem foto</div>}
@@ -94,17 +109,30 @@ export function ProductPicker({ onAdd }: { onAdd: (item: CartItem) => void }) {
             {!groups.length && <p className="p-3 text-sm text-tinta/60">Nenhum produto nesta categoria.</p>}
           </div>}
         </label>
-        <label className="md:hidden"><span className="label">2. Produto</span>
-          <select className="input" value={group} disabled={!category || q.isLoading} onChange={(e) => { setGroup(e.target.value); setProductId('') }}>
-            <option value="">{q.isLoading ? 'Carregando…' : 'Selecione'}</option>
-            {groups.map(([k, list]) => <option key={k} value={k}>{list[0].name} — {list[0].brand}</option>)}
-          </select></label>
+        <div className="hidden md:hidden sm:col-span-2"><span className="label">2. Produto</span></div>
+        <div className="md:hidden sm:col-span-2">
+          <span className="label">2. Escolha o produto</span>
+          {!category ? <p className="text-sm text-tinta/60">Selecione uma categoria acima.</p> : q.isLoading ? <p className="text-sm text-tinta/60">Carregando produtos…</p> :
+          <div className="grid grid-cols-2 gap-2">
+            {groups.map(([k,list]) => { const p=list[0]; const active=group===k; return <button key={k} type="button" onClick={()=>{setGroup(k);setProductId('');setSelectedSize('')}}
+              className={`overflow-hidden rounded-lg border text-left ${active?'border-chilli ring-2 ring-chilli/20':'border-tinta/15'}`}>
+              <div className="aspect-square bg-white/50">{p.image_path && imageUrls.data?.[p.image_path] ? <img src={imageUrls.data[p.image_path]} alt="" className="h-full w-full object-cover"/> : <div className="flex h-full items-center justify-center text-xs text-tinta/45">Sem foto</div>}</div>
+              <span className="block p-2"><span className="block line-clamp-2 text-sm font-semibold">{p.name}</span><span className="block truncate text-xs text-tinta/60">{p.brand}</span></span>
+            </button>})}
+            {!groups.length && <p className="col-span-2 text-sm text-tinta/60">Nenhum produto nesta categoria.</p>}
+          </div>}
+        </div>
         <label><span className="label">3. Tamanho</span>
-          <select className="input" value={productId} disabled={!group} onChange={(e) => setProductId(e.target.value)}>
+          <select className="input" value={selectedSize} disabled={!group} onChange={(e) => { setSelectedSize(e.target.value); setProductId('') }}>
             <option value="">Selecione</option>
-            {sizes.map((p) => <option key={p.id} value={p.id} disabled={p.quantity === 0}>{p.size} ({p.quantity} em estoque)</option>)}
+            {sizes.map((size) => <option key={size} value={size}>{size}</option>)}
           </select></label>
-        <label><span className="label">4. Quantidade</span>
+        <label><span className="label">4. Cor</span>
+          <select className="input" value={productId} disabled={!selectedSize} onChange={(e) => setProductId(e.target.value)}>
+            <option value="">Selecione</option>
+            {colorVariants.map((p) => <option key={p.id} value={p.id} disabled={p.quantity === 0}>{p.color || 'Sem cor'} ({p.quantity} em estoque)</option>)}
+          </select></label>
+        <label><span className="label">5. Quantidade</span>
           <input className="input" type="number" inputMode="numeric" min={1} value={qty} onChange={(e) => setQty(e.target.value)} /></label>
       </div>
       {product && (

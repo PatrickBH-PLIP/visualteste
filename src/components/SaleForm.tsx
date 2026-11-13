@@ -33,7 +33,7 @@ export function SaleForm({ initial }: { initial?: SaleFormInitial }) {
   const [hasDiscount, setHasDiscount] = useState((initial?.sale.discount_cents ?? 0) > 0)
   const [discount, setDiscount] = useState(initial && initial.sale.discount_cents > 0 ? centsToInput(initial.sale.discount_cents) : '')
   const [items, setItems] = useState<CartItem[]>(initial?.items.map((i) => ({
-    product_id: i.product_id, category: i.category, name: i.product_name, brand: i.brand, size: i.size,
+    product_id: i.product_id, category: i.category, name: i.product_name, brand: i.brand, size: i.size, color: i.color,
     quantity: i.quantity, unit_price_cents: i.unit_price_cents })) ?? [])
   const [payNow, setPayNow] = useState(false)
   const [payAmount, setPayAmount] = useState('')
@@ -104,7 +104,7 @@ export function SaleForm({ initial }: { initial?: SaleFormInitial }) {
               <li key={i.product_id} className="card flex flex-wrap items-center gap-3 p-3">
                 <div className="min-w-[180px] flex-1">
                   <p className="font-semibold" style={{ color: CATEGORIES[i.category].main }}>{i.name}</p>
-                  <p className="text-sm text-tinta/70">{CATEGORIES[i.category].label} · {i.brand} · tam. {i.size}</p>
+                  <p className="text-sm text-tinta/70">{CATEGORIES[i.category].label} · {i.brand} · tam. {i.size}{i.color ? ` · ${i.color}` : ''}</p>
                 </div>
                 <label className="flex items-center gap-2 text-sm">Qtd.
                   <input className="input !w-20 !py-1.5" type="number" min={1} inputMode="numeric" value={i.quantity}

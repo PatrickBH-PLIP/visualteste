@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, ImageOff } from 'lucide-react'
+import { ArrowRight, ImageOff, Box } from 'lucide-react'
 import { useState } from 'react'
 import { CATEGORY_LIST } from '@/lib/categories'
 import { formatBRL } from '@/lib/money'
 import { homeSummary } from '@/services/products'
 import { useCompany } from '@/hooks/useAuth'
 import { ErrorBanner } from '@/components/ui'
+import { StockIntakeModal } from '@/components/StockIntakeModal'
 
 /** Fotos das categorias: coloque seus próprios arquivos em public/assets/categories/<slug>.jpg */
 function CategoryPhoto({ slug, color }: { slug: string; color: string }) {
@@ -24,6 +25,7 @@ function CategoryPhoto({ slug, color }: { slug: string; color: string }) {
 export default function Home() {
   const { companyId } = useCompany()
   const s = useQuery({ queryKey: ['home', companyId], queryFn: () => homeSummary(companyId) })
+  const [stockIntakeOpen, setStockIntakeOpen] = useState(false)
   const stats = s.data && [
     { label: 'Produtos cadastrados', value: String(s.data.products) },
     { label: 'Unidades em estoque', value: String(s.data.units) },
@@ -34,9 +36,12 @@ export default function Home() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl">Estoque</h1>
-        <p className="text-tinta/70">Escolha uma categoria para consultar e atualizar o estoque.</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl">Estoque</h1>
+          <p className="text-tinta/70">Escolha uma categoria para consultar e atualizar o estoque.</p>
+        </div>
+        <button type="button" className="btn-primary hidden shrink-0 sm:inline-flex" onClick={() => setStockIntakeOpen(true)}><Box size={19} />Adicionar estoque</button>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -59,6 +64,10 @@ export default function Home() {
       </div>
 
       {s.isError && <ErrorBanner message="Não foi possível carregar o resumo." onRetry={() => s.refetch()} />}
+      <button type="button" aria-label="Adicionar estoque" title="Adicionar estoque" onClick={() => setStockIntakeOpen(true)}
+        className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-xl transition hover:scale-105 sm:hidden"
+        style={{ background: '#fa300f', boxShadow: '0 8px 24px #0003' }}><Box size={25} /></button>
+      {stockIntakeOpen && <StockIntakeModal onClose={() => setStockIntakeOpen(false)} />}
       {stats && (
         <dl className="grid grid-cols-2 gap-3 md:grid-cols-5">
           {stats.map((x) => (
