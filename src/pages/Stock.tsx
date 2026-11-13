@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { LayoutGrid, List, Plus, Search } from 'lucide-react'
+import { LayoutGrid, List, Plus, Search, SlidersHorizontal } from 'lucide-react'
 import { categoryFromSlug } from '@/lib/categories'
 import { formatBRL } from '@/lib/money'
 import { listProducts } from '@/services/products'
@@ -10,15 +10,21 @@ import { ProductImage, stockLevel } from '@/components/ProductCard'
 import { Modal } from '@/components/Modal'
 import { ProductForm } from '@/components/ProductForm'
 import { StockModal } from '@/components/StockModal'
+import { StockAdjustmentModal } from '@/components/StockAdjustmentModal'
 import { EmptyState, ErrorBanner, Spinner } from '@/components/ui'
 import { SIZES, type Product } from '@/types'
 
 type Availability = '' | 'disponivel' | 'baixo' | 'zerado'
 
+const COLOR_HEX: Record<string, string> = {
+  Preto: '#111111', Branco: '#ffffff', Cinza: '#888888', Vermelho: '#e53935',
+  Rosa: '#f48fb1', Terracota: '#c46d50', Bege: '#d8c3a5', Amarelo: '#fdd835', Azul: '#1976d2',
+}
+
 export default function Stock() {
   const { slug } = useParams()
   const theme = categoryFromSlug(slug)
-  const { companyId } = useCompany()
+  const { companyId, role } = useCompany()
 
   const [search, setSearch] = useState('')
   const [brand, setBrand] = useState('')
@@ -29,6 +35,7 @@ export default function Stock() {
   const [form, setForm] = useState<{ product?: Product; initialProduct?: Product } | null>(null)
   const [stock, setStock] = useState<Product | null>(null)
   const [selected, setSelected] = useState<Product[] | null>(null)
+  const [adjusting, setAdjusting] = useState(false)
 
   const q = useQuery({
     queryKey: ['products', companyId, theme?.key],
@@ -44,7 +51,8 @@ export default function Stock() {
       (!term || p.name.toLocaleLowerCase('pt-BR').includes(term)) &&
       (!brand || p.brand === brand) && (!size || p.size === size) &&
       (!avail || (avail === 'disponivel' ? p.quantity > 0 : avail === 'baixo' ? stockLevel(p) === 'baixo' : p.quantity === 0)))
-    out.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR') * (order === 'asc' ? 1 : -1) || SIZES.indexOf(a.size) - SIZES.indexOf(b.size))
+    out.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR') * (order === 'asc' ? 1 : -1) ||
+      SIZES.indexOf(a.size) - SIZES.indexOf(b.size) || (a.color ?? '').localeCompare(b.color ?? '', 'pt-BR'))
     return out
   }, [q.data, search, brand, size, avail, order])
 
@@ -54,7 +62,8 @@ export default function Stock() {
       const key = `${p.name.trim().toLocaleLowerCase('pt-BR')}||${p.brand.trim().toLocaleLowerCase('pt-BR')}`
       groups.set(key, [...(groups.get(key) ?? []), p])
     }
-    return Array.from(groups.values()).map((group) => group.slice().sort((a, b) => SIZES.indexOf(a.size) - SIZES.indexOf(b.size)))
+    return Array.from(groups.values()).map((group) => group.slice().sort((a, b) =>
+      SIZES.indexOf(a.size) - SIZES.indexOf(b.size) || (a.color ?? '').localeCompare(b.color ?? '', 'pt-BR')))
   }, [rows])
 
   if (!theme) return <Navigate to="/" replace />
@@ -63,7 +72,10 @@ export default function Stock() {
     <div className="space-y-5" style={{ ['--c-main' as string]: theme.main }}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold" style={{ color: theme.main }}>Estoque {theme.label.toLowerCase()}</h1>
-        <button type="button" className="btn-primary" onClick={() => setForm({})}><Plus size={18} />Cadastrar novo produto</button>
+        <div className="flex flex-wrap gap-2">
+          {role === 'admin' && <button type="button" className="btn-outline sm:hidden" onClick={() => setAdjusting(true)}><SlidersHorizontal size={18} />Ajuste de estoque</button>}
+          <button type="button" className="btn-primary" onClick={() => setForm({})}><Plus size={18} />Cadastrar novo produto</button>
+        </div>
       </div>
 
       <div className="card grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-6">
@@ -123,7 +135,7 @@ export default function Stock() {
                 <p className="text-sm" style={{ color: theme.accentText }}>{first.brand}</p>
                 <p className="text-sm">Tamanhos: {sizes.join(', ')}</p>
                 <p className="text-sm">Quantidade total: <strong>{quantity}</strong></p>
-                <p className="pt-1 text-xs text-tinta/60">Clique para ver detalhes por tamanho</p>
+                <p className="pt-1 text-xs text-tinta/60">Clique para ver detalhes por tamanho e cor</p>
               </div>
             </button>
           })}
@@ -134,13 +146,14 @@ export default function Stock() {
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-tinta/15 text-xs text-tinta/70">
-              <tr><th className="p-3">Produto</th><th className="p-3">Tam.</th><th className="p-3">Marca</th><th className="p-3 text-right">Estoque</th><th className="p-3 text-right">Preço</th><th className="p-3" /></tr>
+              <tr><th className="p-3">Produto</th><th className="p-3">Tam.</th><th className="p-3">Cor</th><th className="p-3">Marca</th><th className="p-3 text-right">Estoque</th><th className="p-3 text-right">Preço</th><th className="p-3" /></tr>
             </thead>
             <tbody>
               {rows.map((p) => (
                 <tr key={p.id} className="border-b border-tinta/10 last:border-0">
                   <td className="p-3"><div className="flex items-center gap-3"><div className="h-11 w-11 shrink-0 overflow-hidden rounded"><ProductImage path={p.image_path} alt="" /></div><span className="font-medium" style={{ color: theme.main }}>{p.name}</span></div></td>
                   <td className="p-3 font-bold" style={{ color: theme.main }}>{p.size}</td>
+                  <td className="p-3"><span className="inline-flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-full border border-tinta/20" style={{ backgroundColor: p.color_hex || COLOR_HEX[p.color ?? ''] || '#d7c8bb' }} />{p.color || '—'}</span></td>
                   <td className="p-3">{p.brand}</td>
                   <td className="p-3 text-right font-semibold">{p.quantity}{stockLevel(p) !== 'ok' && <span className="ml-2 rounded bg-pendente px-1.5 py-0.5 text-[10px] font-bold">{stockLevel(p) === 'zerado' ? 'SEM' : 'BAIXO'}</span>}</td>
                   <td className="p-3 text-right">{formatBRL(p.price_cents)}</td>
@@ -155,7 +168,8 @@ export default function Stock() {
         </div>
       )}
 
-      {selected && <Modal title="Detalhes do produto" onClose={() => setSelected(null)} wide>
+      {selected && <Modal title="Detalhes do produto" onClose={() => setSelected(null)} wide
+        headerAction={role === 'admin' ? <button type="button" className="btn-outline !min-h-[38px] !px-3" onClick={() => setAdjusting(true)}><SlidersHorizontal size={16} />Ajuste de estoque</button> : undefined}>
         <div className="space-y-5">
           <section className="grid gap-4 rounded-xl border border-tinta/10 p-3 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
             <div className="h-48 overflow-hidden rounded-lg bg-white/50 sm:h-44">
@@ -177,7 +191,7 @@ export default function Stock() {
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-tinta/15 text-xs text-tinta/70"><tr><th className="p-2">Tamanho</th><th className="p-2 text-right">Quantidade</th></tr></thead>
                   <tbody>{selected.map((p) => <tr key={p.id} className="border-b border-tinta/10 last:border-0">
-                    <td className="p-2 font-semibold">{p.size}</td><td className="p-2 text-right">{p.quantity}</td>
+                    <td className="p-2 font-semibold">{p.size} <span className="font-normal text-tinta/60">{p.color ? `· ${p.color}` : ''}</span></td><td className="p-2 text-right">{p.quantity}</td>
                   </tr>)}</tbody>
                 </table>
               </div>
@@ -187,7 +201,7 @@ export default function Stock() {
               <h4 className="mb-3 text-lg font-bold" style={{ color: theme.main }}>Cores e tamanhos</h4>
               <div className="space-y-2">
                 {selected.slice().sort((a,b) => SIZES.indexOf(a.size) - SIZES.indexOf(b.size) || (a.color ?? '').localeCompare(b.color ?? '', 'pt-BR')).map((p) => <div key={p.id} className="flex items-center justify-between gap-2 border-b border-tinta/10 pb-2 last:border-0">
-                  <div className="min-w-0"><p className="font-semibold">{p.size}</p><p className="flex items-center gap-2 text-sm text-tinta/70">{p.color && <span className="h-3.5 w-3.5 rounded-full border border-tinta/20" style={{backgroundColor: p.color}} />} {p.color || 'Cor não informada'}</p></div>
+                  <div className="min-w-0"><p className="font-semibold">{p.size}</p><p className="flex items-center gap-2 text-sm text-tinta/70"><span aria-label={p.color || 'Cor'} className="h-3.5 w-3.5 shrink-0 rounded-full border border-tinta/25 shadow-sm" style={{ backgroundColor: p.color_hex || COLOR_HEX[p.color ?? ''] || '#d7c8bb' }} />{p.color || 'Cor não informada'}</p></div>
                   <span className="shrink-0 text-sm font-bold">{p.quantity} un.</span>
                 </div>)}
               </div>
@@ -199,7 +213,7 @@ export default function Stock() {
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-tinta/15 text-xs text-tinta/70"><tr><th className="p-2">Tamanho</th><th className="p-2 text-right">Custo</th><th className="p-2 text-right">Venda</th></tr></thead>
                   <tbody>{selected.map((p) => <tr key={p.id} className="border-b border-tinta/10 last:border-0">
-                    <td className="p-2 font-semibold">{p.size}</td>
+                    <td className="p-2 font-semibold">{p.size} <span className="font-normal text-tinta/60">{p.color ? `· ${p.color}` : ''}</span></td>
                     <td className="p-2 text-right whitespace-nowrap">{p.cost_cents == null ? 'Não informado' : formatBRL(p.cost_cents)}</td>
                     <td className="p-2 text-right whitespace-nowrap">{formatBRL(p.price_cents)}</td>
                   </tr>)}</tbody>
@@ -213,7 +227,7 @@ export default function Stock() {
               <Plus size={18} /> Cadastrar novo tamanho
             </button>
             <div className="flex flex-wrap gap-2">
-              {selected.map((p) => <button key={p.id} type="button" className="btn-outline" onClick={() => { setForm({ product: p }); setSelected(null) }}>Editar {p.size}</button>)}
+              {selected.map((p) => <button key={p.id} type="button" className="btn-outline" onClick={() => { setForm({ product: p }); setSelected(null) }}>Editar {p.size} · {p.color || 'sem cor'}</button>)}
               {selected.length === 1 && <button type="button" className="btn-outline" onClick={() => { setStock(selected[0]); setSelected(null) }}>Adicionar estoque</button>}
             </div>
           </div>
@@ -221,6 +235,7 @@ export default function Stock() {
       </Modal>}
       {form && <ProductForm product={form.product} initialProduct={form.initialProduct} defaultCategory={theme.key} onClose={() => setForm(null)} />}
       {stock && <StockModal product={stock} onClose={() => setStock(null)} />}
+      {adjusting && <StockAdjustmentModal products={selected ?? q.data ?? []} initialProduct={selected?.length === 1 ? selected[0] : undefined} onClose={() => setAdjusting(false)} />}
     </div>
   )
 }
