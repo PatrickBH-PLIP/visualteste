@@ -156,7 +156,7 @@ export function ProductForm({ product, initialProduct, defaultCategory, onClose 
           </div>}
           <Field label="Material *" error={errors.material?.message}><input className="input" {...register('material')} placeholder="Algodão, renda, microfibra…" /></Field>
           {!editing && <Field label="Quantidade inicial *" error={errors.quantity?.message}><input className="input" type="number" inputMode="numeric" min={0} {...register('quantity')} /></Field>}
-          {editing && <Field label="Quantidade em estoque" hint="Para alterar, use “Adicionar ao estoque” ou registre uma venda."><input className="input opacity-70" value={product!.quantity} readOnly /></Field>}
+          {editing && <Field label="Quantidade em estoque" hint="Para alterar, use “Ajuste de estoque” ou registre uma venda."><input className="input opacity-70" value={product!.quantity} readOnly /></Field>}
           <Field label="Preço de venda (R$) *" error={errors.price?.message}><input className="input" inputMode="decimal" placeholder="0,00" {...register('price')} /></Field>
           <Field label="Custo de aquisição (R$)" error={errors.cost?.message}><input className="input" inputMode="decimal" placeholder="0,00" {...register('cost')} /></Field>
           <Field label="Estoque mínimo" error={errors.min_stock?.message}><input className="input" type="number" inputMode="numeric" min={0} {...register('min_stock')} /></Field>
