@@ -171,6 +171,14 @@ export async function addStock(companyId: string, opId: string, productId: strin
   return data as { product_id: string; quantity: number }
 }
 
+export async function setStockQuantity(companyId: string, opId: string, productId: string, quantity: number, reason: string) {
+  const { data, error } = await supabase.rpc('set_stock_quantity', {
+    p_company: companyId, p_op: opId, p_product: productId, p_quantity: quantity, p_reason: reason,
+  })
+  if (error) throw error
+  return data as { product_id: string; quantity: number; delta: number }
+}
+
 export async function listMovements(companyId: string, limit = 50): Promise<Movement[]> {
   const { data, error } = await supabase.from('inventory_movements')
     .select('*, products(name, size, brand)').eq('company_id', companyId)
